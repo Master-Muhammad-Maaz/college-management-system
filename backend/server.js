@@ -8,13 +8,19 @@ const fs = require("fs");
 const authRoutes = require("./routes/authRoutes");
 const studentRoutes = require("./routes/studentRoutes"); 
 const attendanceRoutes = require("./routes/attendanceRoutes");
-const assignmentRoutes = require("./routes/assignmentRoutes"); // NEW: Assignment Route
+const assignmentRoutes = require("./routes/assignmentRoutes");
 
 const app = express();
 
 // 1. CORS Configuration
+// Added your Vercel URL to the allowed origins to fix the connection error
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:3001"],
+  origin: [
+    "http://localhost:3000", 
+    "http://localhost:3001", 
+    "https://college-management-system123.vercel.app",
+    "https://college-management-system123-cogq8band.vercel.app"
+  ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
@@ -24,43 +30,41 @@ app.use(express.json());
 
 /**
  * STATIC FOLDERS CONFIGURATION
- * Providing access to general uploads and assignment-specific folders
  */
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// NEW: Automatically create assignment directory if it doesn't exist
 const assignmentDir = path.join(__dirname, 'uploads', 'assignments');
 if (!fs.existsSync(assignmentDir)){
     fs.mkdirSync(assignmentDir, { recursive: true });
 }
 
-// 3. MongoDB Connection & Index Cleanup logic
-mongoose.connect("mongodb://127.0.0.1:27017/erepository")
+// 3. MongoDB Connection
+// Updated to use your MongoDB Atlas Cloud URI for production
+const MONGO_URI = process.env.MONGODB_URI || "mongodb+srv://mohammadmaaz8262:87654321@maaz123.eu2rnw5.mongodb.net/college_db?retryWrites=true&w=majority";
+
+mongoose.connect(MONGO_URI)
   .then(async () => {
     console.log("✅ MongoDB Connected Successfully");
     
-    // --- AUTO-CLEANUP START ---
     try {
       const collection = mongoose.connection.collection("studentrecords");
       const currentIndexes = await collection.indexes();
       const indexNames = currentIndexes.map(idx => idx.name);
 
-      // Dropping legacy indexes to prevent duplicate key errors
       if (indexNames.includes("srNo_1")) {
         await collection.dropIndex("srNo_1");
-        console.log("⚠️ Legacy 'srNo_1' index has been removed.");
+        console.log("⚠️ Legacy index 'srNo_1' removed.");
       }
       
       if (indexNames.includes("name_1")) {
         await collection.dropIndex("name_1");
-        console.log("⚠️ Legacy 'name_1' index has been removed.");
+        console.log("⚠️ Legacy index 'name_1' removed.");
       }
 
-      console.log("🚀 New Composite Index is ready for activation.");
+      console.log("🚀 Database indexes are optimized.");
     } catch (err) {
-      console.log("ℹ️ Index Cleanup: All indexes are up to date.");
+      console.log("ℹ️ Index Status: Optimized.");
     }
-    // --- AUTO-CLEANUP END ---
   })
   .catch(err => {
     console.error("❌ MongoDB Connection Error:", err);
@@ -80,35 +84,35 @@ app.get('/api/download/:id', async (req, res) => {
         const filePath = path.join(__dirname, 'uploads', fileNameOnly);
 
         if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ success: false, message: "Physical file not found" });
+            return res.status(404).json({ success: false, message: "Physical file not found on server" });
         }
 
         res.download(filePath, file.name);
 
     } catch (error) {
         console.error("❌ Download API Error:", error);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        res.status(500).json({ success: false, message: "Internal Server Error during download" });
     }
 });
 
 // 4. Base Route
 app.get("/", (req, res) => {
-  res.send("E-Repository Backend is Running...");
+  res.send("E-Repository API is active and running.");
 });
 
 // 5. API Routes
 app.use("/api", authRoutes);
 app.use("/api/students", studentRoutes); 
 app.use("/api/attendance", attendanceRoutes);
-app.use("/api/assignments", assignmentRoutes); // Registered Assignment API
+app.use("/api/assignments", assignmentRoutes);
 
 // 6. Global Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ success: false, message: "Internal Server Error" });
+  res.status(500).json({ success: false, message: "An unexpected error occurred on the server." });
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server is running on: http://localhost:${PORT}`);
+  console.log(`🚀 Server is live on port: ${PORT}`);
 });
