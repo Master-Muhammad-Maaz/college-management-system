@@ -3,17 +3,29 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Users, Calendar, Save, UploadCloud, Loader2, Play, CheckCircle, Coffee, FileDown, UserPlus, BookOpen } from "lucide-react"
 import Link from "next/link"
-// Naya Modal Import
 import AddStudentModal from "../../../components/AddStudentModal";
 
+// --- TYPES & INTERFACES ---
+interface Student {
+  _id: string;
+  srNo: string;
+  name: string;
+}
+
+interface AttendanceRecord {
+  studentId: string;
+  status: string;
+}
+
 export default function StudentManagement() {
-  const [students, setStudents] = useState([])
+  // Properly typing the states
+  const [students, setStudents] = useState<Student[]>([])
   const [selectedCourse, setSelectedCourse] = useState("B.Sc-I")
-  const [attendance, setAttendance] = useState({}) 
+  const [attendance, setAttendance] = useState<Record<string, string>>({}) 
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [isSwipeMode, setIsSwipeMode] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [showModal, setShowModal] = useState(false) // Modal control state
+  const [showModal, setShowModal] = useState(false)
 
   const courses = ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II"]
 
@@ -25,9 +37,14 @@ export default function StudentManagement() {
 
       const resAt = await fetch(`http://localhost:5000/api/attendance/today/${selectedDate}/${selectedCourse}`)
       const dataAt = await resAt.json()
+      
       if (dataAt.success) {
-        const attendanceMap = {}
-        dataAt.records.forEach(rec => { attendanceMap[rec.studentId] = rec.status })
+        // FIX: Defined the type for the local map
+        const attendanceMap: Record<string, string> = {}
+        // FIX: Added type 'AttendanceRecord' to 'rec'
+        dataAt.records.forEach((rec: AttendanceRecord) => { 
+          attendanceMap[rec.studentId] = rec.status 
+        })
         setAttendance(attendanceMap)
       }
     } catch (err) { console.error(err) }
@@ -35,14 +52,15 @@ export default function StudentManagement() {
 
   useEffect(() => { fetchStudentsAndAttendance() }, [selectedDate, selectedCourse])
 
-  const markAttendance = async (studentId, status) => {
+  const markAttendance = async (studentId: string, status: string) => {
     try {
       const res = await fetch("http://localhost:5000/api/attendance/mark", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentId, date: selectedDate, status, course: selectedCourse })
       })
-      if ((await res.json()).success) {
+      const result = await res.json()
+      if (result.success) {
         setAttendance(prev => ({ ...prev, [studentId]: status }))
         if (isSwipeMode) setCurrentIndex(prev => prev + 1)
       }
@@ -72,12 +90,10 @@ export default function StudentManagement() {
           <h1 className="text-3xl font-bold flex items-center gap-3"><Users className="text-sky-400" /> Management</h1>
           
           <div className="flex flex-wrap justify-center gap-3 bg-black/40 p-2 rounded-2xl border border-white/5">
-            {/* ADD STUDENT BUTTON */}
             <button onClick={() => setShowModal(true)} className="px-4 py-2 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-sky-500 hover:text-white transition-all">
               <UserPlus size={14}/> Add Student
             </button>
 
-            {/* NEW: ASSIGNMENTS BUTTON */}
             <Link href="/admin/assignments" className="px-4 py-2 bg-purple-600/10 text-purple-400 border border-purple-500/20 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-purple-600 hover:text-white transition-all">
               <BookOpen size={14}/> Assignments
             </Link>
@@ -88,7 +104,7 @@ export default function StudentManagement() {
           </div>
         </div>
 
-        {/* SWIPE OVERLAY Logic */}
+        {/* SWIPE OVERLAY */}
         <AnimatePresence>
           {isSwipeMode && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-[#0a0c14] flex items-center justify-center p-6">
