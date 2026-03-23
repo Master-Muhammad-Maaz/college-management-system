@@ -1,12 +1,21 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { X, UserPlus, Upload, Trash2 } from 'lucide-react';
 
-const AddStudentModal = ({ selectedCourse, onClose, refreshData }) => {
+// 1. Define the Props Interface
+interface AddStudentModalProps {
+  selectedCourse: string;
+  onClose: () => void;
+  refreshData: () => void;
+}
+
+// 2. Apply the interface to the component
+const AddStudentModal: React.FC<AddStudentModalProps> = ({ selectedCourse, onClose, refreshData }) => {
   const [formData, setFormData] = useState({ srNo: "", name: "" });
   const [loading, setLoading] = useState(false);
 
-  const handleManualSubmit = async (e) => {
+  // 3. Typed Form Submission
+  const handleManualSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
@@ -27,8 +36,9 @@ const AddStudentModal = ({ selectedCourse, onClose, refreshData }) => {
     setLoading(false);
   };
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
+  // 4. Typed File Upload
+  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; // Added optional chaining for safety
     if(!file) return;
     const data = new FormData();
     data.append("file", file);
