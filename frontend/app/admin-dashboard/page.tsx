@@ -39,7 +39,7 @@ export default function AdminDashboard() {
     return () => window.removeEventListener("click", closeMenu)
   }, [currentFolder])
 
-  const enterFolder = (folder) => {
+  const enterFolder = (folder: any) => {
     setPath([...path, { id: folder._id, name: folder.name }])
     setCurrentFolder(folder._id)
   }
