@@ -3,12 +3,25 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { FolderOpen, FileText, File as FileIcon, ChevronRight, Home, Download, MoreVertical, Eye } from "lucide-react"
 
+// 1. Define types for your data structure
+interface RepoItem {
+  _id: string;
+  name: string;
+  path: string;
+}
+
+interface PathStep {
+  id: string;
+  name: string;
+}
+
 export default function StudentDashboard() {
-  const [folders, setFolders] = useState([])
-  const [files, setFiles] = useState([])
-  const [currentFolder, setCurrentFolder] = useState("root")
-  const [path, setPath] = useState([{ id: "root", name: "Root" }])
-  const [activeMenu, setActiveMenu] = useState(null)
+  // 2. Apply types to your states
+  const [folders, setFolders] = useState<RepoItem[]>([])
+  const [files, setFiles] = useState<RepoItem[]>([])
+  const [currentFolder, setCurrentFolder] = useState<string>("root")
+  const [path, setPath] = useState<PathStep[]>([{ id: "root", name: "Root" }])
+  const [activeMenu, setActiveMenu] = useState<string | null>(null)
 
   const fetchData = async () => {
     try {
@@ -31,25 +44,26 @@ export default function StudentDashboard() {
     return () => window.removeEventListener("click", closeMenu)
   }, [currentFolder])
 
-  const enterFolder = (folder) => {
+  // 3. FIX: Add 'RepoItem' type to folder parameter
+  const enterFolder = (folder: RepoItem) => {
     setPath([...path, { id: folder._id, name: folder.name }])
     setCurrentFolder(folder._id)
   }
 
-  const navigateTo = (index) => {
+  // 4. FIX: Add 'number' type to index parameter
+  const navigateTo = (index: number) => {
     const newPath = path.slice(0, index + 1)
     setPath(newPath)
     setCurrentFolder(newPath[newPath.length - 1].id)
   }
 
-  // --- VIEW LOGIC (PATH FIX) ---
-  const handleView = (file) => {
-    // Agar database path mein 'uploads/' shamil hai, toh use clean karte hain
+  // 5. FIX: Add 'RepoItem' type to file parameter
+  const handleView = (file: RepoItem) => {
     const cleanFileName = file.path.split(/[\\/]/).pop(); 
     window.open(`http://localhost:5000/uploads/${cleanFileName}`, "_blank");
   }
 
-  const handleDownload = (file) => {
+  const handleDownload = (file: RepoItem) => {
     window.open(`http://localhost:5000/api/download/${file._id}`, "_blank");
   }
 
@@ -98,7 +112,6 @@ export default function StudentDashboard() {
         {files.map((file) => (
           <motion.div key={file._id} className="flex flex-col items-center group relative" whileHover={{ y: -5 }}>
             
-            {/* Clickable Icon for Viewing */}
             <div 
               onClick={() => handleView(file)}
               className="bg-emerald-900/10 p-6 rounded-2xl group-hover:bg-emerald-800/20 border border-white/5 transition-all shadow-xl text-emerald-500 cursor-pointer relative"
@@ -109,7 +122,6 @@ export default function StudentDashboard() {
               </div>
             </div>
 
-            {/* Meatball Menu (...) Button */}
             <button 
               onClick={(e) => {
                 e.stopPropagation();
@@ -120,7 +132,6 @@ export default function StudentDashboard() {
               <MoreVertical size={18} />
             </button>
 
-            {/* Download Menu */}
             <AnimatePresence>
               {activeMenu === file._id && (
                 <motion.div 
