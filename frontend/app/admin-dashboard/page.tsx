@@ -9,7 +9,7 @@ export default function AdminDashboard() {
   // Render Backend URL (Environment variable se uthayega, nahi toh fallback use karega)
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-  const [folders, setFolders] = useState<any[]>([])
+  const [folders, setFolders] = useState<any[]>([]) 
   const [files, setFiles] = useState<any[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [folderName, setFolderName] = useState("")
