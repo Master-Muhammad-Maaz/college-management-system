@@ -3,28 +3,31 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { FolderPlus, Upload, FolderOpen, Trash2, X, ChevronLeft, Home, FileText, File as FileIcon, ChevronRight, Loader2, Users, LayoutDashboard } from "lucide-react"
 import axios from "axios"
-import Link from "next/link" // Link import kiya navigation ke liye
+import Link from "next/link"
 
 export default function AdminDashboard() {
-  const [folders, setFolders] = useState([])
-  const [files, setFiles] = useState([])
+  // Render Backend URL (Environment variable se uthayega, nahi toh fallback use karega)
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+  const [folders, setFolders] = useState<any[]>([])
+  const [files, setFiles] = useState<any[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [folderName, setFolderName] = useState("")
   const [currentFolder, setCurrentFolder] = useState("root")
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
   const [path, setPath] = useState([{ id: "root", name: "Root" }])
-  const fileInputRef = useRef(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0, visible: false })
-  const [selectedItem, setSelectedItem] = useState(null)
+  const [selectedItem, setSelectedItem] = useState<any>(null)
 
   const fetchData = async () => {
     try {
-      const resF = await fetch(`http://localhost:5000/api/folders/${currentFolder}`)
+      const resF = await fetch(`${API_BASE_URL}/api/folders/${currentFolder}`)
       const dataF = await resF.json()
       if (dataF.success) setFolders(dataF.folders)
 
-      const resFiles = await fetch(`http://localhost:5000/api/files/${currentFolder}`)
+      const resFiles = await fetch(`${API_BASE_URL}/api/files/${currentFolder}`)
       const dataFiles = await resFiles.json()
       if (dataFiles.success) setFiles(dataFiles.files)
     } catch (err) {
@@ -39,21 +42,22 @@ export default function AdminDashboard() {
     return () => window.removeEventListener("click", closeMenu)
   }, [currentFolder])
 
+  // FIX: Added 'any' type to folder to resolve Vercel build error
   const enterFolder = (folder: any) => {
     setPath([...path, { id: folder._id, name: folder.name }])
     setCurrentFolder(folder._id)
   }
 
-  const navigateTo = (index) => {
+  const navigateTo = (index: number) => {
     const newPath = path.slice(0, index + 1)
     setPath(newPath)
     setCurrentFolder(newPath[newPath.length - 1].id)
   }
 
-  const handleCreateFolder = async (e) => {
+  const handleCreateFolder = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!folderName) return
-    const res = await fetch("http://localhost:5000/api/create-folder", {
+    const res = await fetch(`${API_BASE_URL}/api/create-folder`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: folderName, parentId: currentFolder === "root" ? null : currentFolder })
@@ -62,7 +66,7 @@ export default function AdminDashboard() {
     if (data.success) { setFolderName(""); setIsModalOpen(false); fetchData() }
   }
 
-  const handleFileUpload = async (e) => {
+  const handleFileUpload = async (e: any) => {
     const file = e.target.files[0]
     if (!file) return
     const formData = new FormData()
@@ -71,8 +75,8 @@ export default function AdminDashboard() {
     setIsUploading(true)
     setUploadProgress(0)
     try {
-      const res = await axios.post("http://localhost:5000/api/upload", formData, {
-        onUploadProgress: (p) => setUploadProgress(Math.round((p.loaded * 100) / p.total)),
+      const res = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
+        onUploadProgress: (p: any) => setUploadProgress(Math.round((p.loaded * 100) / p.total)),
       })
       if (res.data.success) {
         fetchData()
@@ -87,8 +91,8 @@ export default function AdminDashboard() {
   const handleDelete = async () => {
     if (!selectedItem) return
     const url = selectedItem.type === 'folder' 
-      ? `http://localhost:5000/api/delete-folder/${selectedItem._id}` 
-      : `http://localhost:5000/api/delete-file/${selectedItem._id}`
+      ? `${API_BASE_URL}/api/delete-folder/${selectedItem._id}` 
+      : `${API_BASE_URL}/api/delete-file/${selectedItem._id}`
     if (confirm(`Delete this ${selectedItem.type}?`)) {
       await fetch(url, { method: "DELETE" })
       fetchData()
@@ -96,15 +100,14 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-blue-900 to-black text-white p-10 font-sans" onContextMenu={(e) => { e.preventDefault(); setMenuPos({ x: e.pageX, y: e.pageY, visible: true }); setSelectedItem(null); }}>
+    <div className="min-h-screen bg-gradient-to-r from-blue-900 to-black text-white p-10 font-sans" 
+      onContextMenu={(e) => { e.preventDefault(); setMenuPos({ x: e.pageX, y: e.pageY, visible: true }); setSelectedItem(null); }}>
       
-      {/* HEADER WITH CONNECTED NAV */}
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between mb-8 gap-6 border-b border-white/10 pb-6">
         <h1 className="text-3xl font-bold flex items-center gap-3">
           <FileText className="text-blue-400" /> Admin Repository
         </h1>
 
-        {/* NAVIGATION BUTTONS */}
         <div className="flex items-center gap-4 bg-black/40 p-1.5 rounded-2xl border border-white/5">
           <Link href="/admin-dashboard">
             <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20">
@@ -119,7 +122,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* BREADCRUMBS */}
       <div className="max-w-6xl mx-auto mb-6 flex items-center gap-2 bg-white/5 p-3 rounded-lg border border-white/5">
         {path.map((step, index) => (
           <div key={step.id} className="flex items-center gap-2">
@@ -129,7 +131,6 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* PROGRESS BAR */}
       <AnimatePresence>
         {isUploading && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="max-w-6xl mx-auto mb-6 bg-gray-900/80 p-4 rounded-xl border border-blue-500/30 shadow-2xl">
@@ -161,14 +162,13 @@ export default function AdminDashboard() {
 
       <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
 
-      {/* CONTEXT MENU */}
       <AnimatePresence>
         {menuPos.visible && (
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ top: menuPos.y, left: menuPos.x }} className="fixed bg-[#0f1117] border border-white/10 shadow-2xl rounded-lg py-2 w-52 z-50">
             {!selectedItem ? (
               <>
                 <button onClick={() => setIsModalOpen(true)} className="w-full flex items-center px-4 py-2 hover:bg-blue-600 transition text-sm"><FolderPlus size={16} className="mr-2" /> New Folder</button>
-                <button onClick={() => fileInputRef.current.click()} className="w-full flex items-center px-4 py-2 hover:bg-blue-600 transition text-sm"><Upload size={16} className="mr-2" /> Upload File</button>
+                <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center px-4 py-2 hover:bg-blue-600 transition text-sm"><Upload size={16} className="mr-2" /> Upload File</button>
               </>
             ) : (
               <>
@@ -181,15 +181,14 @@ export default function AdminDashboard() {
         )}
       </AnimatePresence>
 
-      {/* FOLDER MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/80 backdrop-blur-sm">
           <div className="bg-[#12141c] p-8 rounded-2xl w-80 border border-blue-500/50 shadow-2xl">
-             <h2 className="text-xl font-bold mb-4 text-blue-400 italic">Create Folder</h2>
-             <form onSubmit={handleCreateFolder}>
+              <h2 className="text-xl font-bold mb-4 text-blue-400 italic">Create Folder</h2>
+              <form onSubmit={handleCreateFolder}>
                 <input className="w-full p-3 bg-gray-800 rounded-lg mb-4 outline-none border border-white/5 focus:border-blue-500" value={folderName} onChange={(e)=>setFolderName(e.target.value)} autoFocus />
                 <div className="flex justify-end gap-3 font-bold"><button type="button" onClick={()=>setIsModalOpen(false)}>Back</button><button type="submit" className="bg-blue-600 px-6 py-2 rounded-lg shadow-lg">Add</button></div>
-             </form>
+              </form>
           </div>
         </div>
       )}
