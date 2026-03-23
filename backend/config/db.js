@@ -1,17 +1,26 @@
 const mongoose = require("mongoose");
 
+/**
+ * Database Connection Configuration
+ * Prioritizes the Cloud MongoDB URI from environment variables for production.
+ */
 const connectDB = async () => {
   try {
-    // Use the environment variable for production, fallback to local only for development
+    // 1. Connection string selection (Cloud Atlas for production / Local for dev)
     const connString = process.env.MONGODB_URI || "mongodb+srv://mohammadmaaz8262:87654321@maaz123.eu2rnw5.mongodb.net/college_db?retryWrites=true&w=majority";
     
-    await mongoose.connect(connString);
+    // 2. Establish connection with stability options
+    const conn = await mongoose.connect(connString, {
+      serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds instead of hanging
+    });
 
-    console.log("✅ MongoDB Connected Successfully");
+    console.log(`✅ MongoDB Connected Successfully: ${conn.connection.host}`);
 
   } catch (error) {
-    console.error("❌ MongoDB Connection Error:", error);
-    process.exit(1); // Stop the server if the database fails
+    console.error("❌ MongoDB Connection Error:", error.message);
+    
+    // 3. Exit process with failure code if database cannot be reached
+    process.exit(1); 
   }
 };
 
