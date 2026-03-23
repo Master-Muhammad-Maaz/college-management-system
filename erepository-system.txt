@@ -1,0 +1,52 @@
+erepository-system
+│
+├── backend
+│   │
+│   ├── config
+│   │     └── db.js
+│   │
+│   ├── controllers
+│   │     └── authController.js
+│   │
+│   ├── models
+│   │     └── Student.js
+│   │		└── Admin.js
+│   │
+│   ├── routes
+│   │     └── authRoutes.js
+│   │
+│   ├── node_modules
+│   │
+│   ├── package.json
+│   └── server.js
+│
+│
+└── frontend
+    │
+    ├── app
+    │   │
+    │   ├── admin-dashboard
+    │   ├── admin-login
+    │   │     └── page.tsx
+    │   │
+    │   ├── student-login
+    │   │     └── page.tsx
+    │   │
+    │   ├── register
+    │   │     └── page.tsx
+    │   │
+    │   ├── layout.tsx
+    │   ├── page.tsx
+    │   └── globals.css
+    │
+    ├── public
+    │		file
+    │      globe
+    │      next
+    │      vercel
+    │      window
+    ├── node_modules
+    │
+    ├── package.json
+    ├── next.config.ts
+    └── tsconfig.json
