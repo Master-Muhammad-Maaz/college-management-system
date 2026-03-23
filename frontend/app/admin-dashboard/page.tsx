@@ -181,7 +181,7 @@ export default function AdminDashboard() {
         {isUploading && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="max-w-6xl mx-auto mb-6 bg-blue-900/20 p-4 rounded-xl border border-blue-500/30 backdrop-blur-md">
             <div className="flex justify-between mb-2 text-xs font-bold uppercase tracking-widest text-blue-400">
-              <span className="flex items-center gap-2"><Loader2 className="animate-spin" size={14} /> Uploading to Cloud...</span>
+              <span className="flex items-center gap-2"><Loader2 className="animate-spin" size={14} /> Uploading...</span>
               <span>{uploadProgress}%</span>
             </div>
             <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
@@ -236,7 +236,7 @@ export default function AdminDashboard() {
           >
             {!selectedItem ? (
               <>
-                <button onClick={() => setIsModalOpen(true)} className="w-full flex items-center px-4 py-2.5 hover:bg-blue-600 transition text-sm"><FolderPlus size={16} className="mr-3" /> New Folder</button>
+                <button onClick={() => setIsModalOpen(true)} className="w-full flex items-center px-4 py-2.5 hover:bg-blue-600 transition text-sm"><FolderPlus size(16} className="mr-3" /> New Folder</button>
                 <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center px-4 py-2.5 hover:bg-blue-600 transition text-sm"><Upload size={16} className="mr-3" /> Upload File</button>
               </>
             ) : (
@@ -250,7 +250,7 @@ export default function AdminDashboard() {
         )}
       </AnimatePresence>
 
-      {/* Create Folder Modal */}
+      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/60 backdrop-blur-md">
           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[#0d1117] p-8 rounded-2xl w-full max-w-sm border border-white/10 shadow-2xl relative">
@@ -264,7 +264,7 @@ export default function AdminDashboard() {
                   onChange={(e)=>setFolderName(e.target.value)} 
                   autoFocus 
                 />
-                <div className="flex justify-end gap-3 font-bold">
+                <div className="flex justify-end gap-3">
                   <button type="button" className="px-5 py-2 text-gray-400 hover:text-white" onClick={()=>setIsModalOpen(false)}>Cancel</button>
                   <button type="submit" className="bg-blue-600 px-8 py-2 rounded-xl shadow-lg hover:bg-blue-500 active:scale-95 transition-all">Create</button>
                 </div>
