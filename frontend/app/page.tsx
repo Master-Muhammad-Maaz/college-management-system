@@ -5,10 +5,10 @@ import { ShieldCheck, GraduationCap, ChevronRight, Award, BookOpen } from "lucid
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 selection:bg-sky-100 selection:text-sky-600">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 selection:bg-sky-100 selection:text-sky-600 relative overflow-hidden">
       
       {/* SOFT DYNAMIC GRADIENT BACKGROUND */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
+      <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-sky-100 rounded-full blur-[120px] opacity-60"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-50 rounded-full blur-[100px] opacity-60"></div>
       </div>
@@ -42,7 +42,7 @@ export default function Home() {
 
           <div className="mt-6 flex items-center justify-center gap-4">
              <div className="h-[2px] w-8 bg-sky-200"></div>
-             <h2 className="text-lg md:text-xl font-black tracking-[0.3em] text-slate-400 uppercase">
+             <h2 className="text-lg md:text-xl font-black tracking-[0.3em] text-slate-400 uppercase italic">
                E - Repository
              </h2>
              <div className="h-[2px] w-8 bg-sky-200"></div>
@@ -50,7 +50,7 @@ export default function Home() {
 
           <p className="mt-8 text-sm md:text-base text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">
             Shri Shivaji Education Society, Amravati <br/>
-            <span className="text-slate-400 font-semibold">Shri Shivaji College of Arts, Commerce & Science, Akola</span>
+            <span className="text-slate-400 font-semibold uppercase tracking-wider text-[11px]">Shri Shivaji College of Arts, Commerce & Science, Akola</span>
           </p>
         </motion.div>
 
@@ -59,14 +59,17 @@ export default function Home() {
           
           {/* ADMIN CARD */}
           <motion.div
-            whileHover={{ y: -8, shadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)" }}
-            className="group bg-white border border-slate-200 p-10 rounded-[40px] shadow-sm flex flex-col items-center text-center transition-all"
+            whileHover={{ 
+              y: -8, 
+              boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)" 
+            }}
+            className="group bg-white border border-slate-200 p-10 rounded-[40px] shadow-sm flex flex-col items-center text-center transition-all cursor-default"
           >
             <div className="w-16 h-16 bg-sky-50 rounded-3xl flex items-center justify-center mb-6 text-sky-600 group-hover:bg-sky-600 group-hover:text-white transition-all duration-300">
               <ShieldCheck size={32} />
             </div>
             <h3 className="text-2xl font-black text-slate-800 mb-2">Admin Portal</h3>
-            <p className="text-[10px] text-slate-400 font-bold uppercase mb-8 tracking-widest">Authorized Personnel Only</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase mb-8 tracking-widest">Authorized Faculty Access</p>
             
             <Link href="/admin-login" className="w-full">
               <button className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-sky-600 transition-all uppercase text-xs tracking-widest shadow-lg shadow-slate-200">
@@ -77,8 +80,11 @@ export default function Home() {
 
           {/* STUDENT CARD */}
           <motion.div
-            whileHover={{ y: -8, shadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)" }}
-            className="group bg-white border border-slate-200 p-10 rounded-[40px] shadow-sm flex flex-col items-center text-center transition-all"
+            whileHover={{ 
+              y: -8, 
+              boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)" 
+            }}
+            className="group bg-white border border-slate-200 p-10 rounded-[40px] shadow-sm flex flex-col items-center text-center transition-all cursor-default"
           >
             <div className="w-16 h-16 bg-indigo-50 rounded-3xl flex items-center justify-center mb-6 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
               <GraduationCap size={32} />
@@ -94,7 +100,7 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* FACULTY STRIP */}
+        {/* FACULTY SECTION */}
         <div className="mt-32 w-full max-w-5xl bg-white border border-slate-100 rounded-[30px] p-10 shadow-sm mb-20">
           <div className="text-center mb-10">
             <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Department Faculty</h2>
@@ -102,9 +108,9 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
               { name: "Mrs. R. S. Kale", role: "HOD" },
-              { name: "Dr. A. B. Dube", role: "Professor" },
-              { name: "Dr. S. M. Chavan", role: "Professor" },
-              { name: "Mrs. M. R. Gudade", role: "Professor" }
+              { name: "Dr. A. B. Dube", role: "Assistant Professor" },
+              { name: "Dr. S. M. Chavan", role: "Assistant Professor" },
+              { name: "Mrs. M. R. Gudade", role: "Assistant Professor" }
             ].map((fac, i) => (
               <div key={i}>
                 <p className="text-xs font-black text-slate-800">{fac.name}</p>
@@ -117,9 +123,9 @@ export default function Home() {
         {/* MINIMAL FOOTER */}
         <footer className="w-full py-12 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6 opacity-60">
           <p className="text-[10px] font-bold uppercase tracking-widest">
-            Developed by <span className="text-slate-900 font-black">Mohammed Maaz</span>
+            Developed by <span className="text-slate-900 font-black italic">Mohammed Maaz</span>
           </p>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <BookOpen size={16} className="text-sky-600" />
             <span className="text-[10px] font-bold uppercase tracking-widest italic">Under Guidance of Mr. A. S. Jadhon</span>
           </div>
