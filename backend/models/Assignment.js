@@ -1,15 +1,16 @@
 const mongoose = require("mongoose");
 
 const AssignmentSchema = new mongoose.Schema({
-  fileName: { type: String, required: true }, // Admin jo naam rakhega
-  course: { type: String, required: true },   // B.Sc-I, M.Sc-II etc.
-  semester: { type: String, required: true }, // Sem-1, Sem-2 etc.
+  fileName: { type: String, required: true },
+  course: { type: String, required: true },   
+  semester: { type: String, required: true }, 
   type: { type: String, enum: ["file", "text"], required: true },
-  content: { type: String }, // Agar text likha ho
-  fileUrl: { type: String },  // Agar file upload ki ho
+  content: { type: String }, 
+  fileUrl: { type: String },  
   teacherName: { type: String, required: true },
   uploadedAt: { type: Date, default: Date.now },
-  deadline: { type: String }
+  // FIX: Changed String to Date for better time-based queries
+  deadline: { type: Date } 
 });
 
 module.exports = mongoose.model("Assignment", AssignmentSchema);
