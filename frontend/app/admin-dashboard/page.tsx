@@ -9,7 +9,7 @@ import {
 import axios from "axios"
 import Link from "next/link"
 
-// TYPESCRIPT INTERFACES (Build error fix karne ke liye)
+// --- FIX: TypeScript Types defined here to solve Vercel Build Error ---
 interface RepoItem {
   _id: string;
   name: string;
@@ -22,6 +22,7 @@ interface PathStep {
 }
 
 export default function AdminDashboard() {
+  // Aapka Render Backend URL
   const API_BASE_URL = "https://college-management-system-ae1l.onrender.com";
 
   const [folders, setFolders] = useState<RepoItem[]>([])
@@ -57,7 +58,7 @@ export default function AdminDashboard() {
     return () => window.removeEventListener("click", closeMenu)
   }, [currentFolder])
 
-  // FIXED: Added type for 'folder' parameter
+  // --- FIX: Added 'RepoItem' type to fix the screenshot error ---
   const enterFolder = (folder: RepoItem) => {
     setPath([...path, { id: folder._id, name: folder.name }])
     setCurrentFolder(folder._id)
@@ -152,7 +153,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* PROGRESS BAR */}
+      {/* UPLOAD PROGRESS */}
       <AnimatePresence>
         {isUploading && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="max-w-6xl mx-auto mb-6 bg-gray-900/80 p-4 rounded-xl border border-blue-500/30">
@@ -167,7 +168,7 @@ export default function AdminDashboard() {
         )}
       </AnimatePresence>
 
-      {/* GRID */}
+      {/* GRID VIEW */}
       <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
         {folders.map((f) => (
           <motion.div key={f._id} 
@@ -175,7 +176,9 @@ export default function AdminDashboard() {
             onDoubleClick={() => enterFolder(f)} 
             className="flex flex-col items-center group cursor-pointer" 
             whileHover={{ scale: 1.05 }}>
-            <div className="bg-blue-800/20 p-6 rounded-xl group-hover:bg-blue-700/40 border border-white/5 shadow-lg"><FolderOpen size={50} className="text-sky-400" /></div>
+            <div className="bg-blue-800/20 p-6 rounded-xl group-hover:bg-blue-700/40 border border-white/5 shadow-lg">
+                <FolderOpen size={50} className="text-sky-400" />
+            </div>
             <span className="mt-2 text-sm font-medium text-center truncate w-full">{f.name}</span>
           </motion.div>
         ))}
@@ -184,7 +187,9 @@ export default function AdminDashboard() {
             onContextMenu={(e) => { e.stopPropagation(); e.preventDefault(); setSelectedItem({ ...file, type: 'file' }); setMenuPos({ x: e.pageX, y: e.pageY, visible: true }); }} 
             className="flex flex-col items-center group cursor-pointer" 
             whileHover={{ scale: 1.05 }}>
-            <div className="bg-gray-800/40 p-6 rounded-xl group-hover:bg-gray-700/60 border border-white/5 text-green-400"><FileIcon size={50} /></div>
+            <div className="bg-gray-800/40 p-6 rounded-xl group-hover:bg-gray-700/60 border border-white/5 text-green-400">
+                <FileIcon size={50} />
+            </div>
             <span className="mt-2 text-xs text-center break-all line-clamp-2 w-24">{file.name}</span>
           </motion.div>
         ))}
@@ -219,7 +224,10 @@ export default function AdminDashboard() {
               <h2 className="text-xl font-bold mb-4 text-blue-400">New Folder</h2>
               <form onSubmit={handleCreateFolder}>
                 <input className="w-full p-3 bg-gray-800 rounded-lg mb-4 outline-none border border-white/5" value={folderName} onChange={(e)=>setFolderName(e.target.value)} autoFocus />
-                <div className="flex justify-end gap-3 font-bold"><button type="button" onClick={()=>setIsModalOpen(false)}>Back</button><button type="submit" className="bg-blue-600 px-6 py-2 rounded-lg">Add</button></div>
+                <div className="flex justify-end gap-3 font-bold">
+                    <button type="button" onClick={()=>setIsModalOpen(false)}>Back</button>
+                    <button type="submit" className="bg-blue-600 px-6 py-2 rounded-lg">Add</button>
+                </div>
               </form>
           </div>
         </div>
