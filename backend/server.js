@@ -12,21 +12,23 @@ const assignmentRoutes = require("./routes/assignmentRoutes");
 
 const app = express();
 
-// 1. CORS Configuration
-// Consistently allowed origins including local development and production Vercel apps
+// 1. Updated CORS Configuration
+// Added your new Vercel domains to prevent "Registration failed"
 const allowedOrigins = [
   "http://localhost:3000", 
   "http://localhost:3001", 
   "https://college-management-system123.vercel.app",
-  "https://college-management-system123-cogq8band.vercel.app"
+  "https://college-management-system-bdci.vercel.app",
+  "https://college-management-system-lac.vercel.app"
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl) or those in the allowed list
+    // Allow requests with no origin or those in the allowed list
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.error(`CORS Blocked for origin: ${origin}`);
       callback(new Error("Not allowed by CORS"));
     }
   },
@@ -42,7 +44,6 @@ app.use(express.json());
  */
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Ensure directory existence with error handling
 const assignmentDir = path.join(__dirname, 'uploads', 'assignments');
 try {
   if (!fs.existsSync(assignmentDir)){
@@ -53,7 +54,6 @@ try {
 }
 
 // 3. MongoDB Connection
-// Priority given to Environment Variables for security
 const MONGO_URI = process.env.MONGODB_URI || "mongodb+srv://mohammadmaaz8262:87654321@maaz123.eu2rnw5.mongodb.net/college_db?retryWrites=true&w=majority";
 
 mongoose.connect(MONGO_URI)
@@ -65,7 +65,6 @@ mongoose.connect(MONGO_URI)
       const currentIndexes = await collection.indexes();
       const indexNames = currentIndexes.map(idx => idx.name);
 
-      // Clean up legacy indexes to prevent configuration conflicts
       if (indexNames.includes("srNo_1")) {
         await collection.dropIndex("srNo_1");
         console.log("⚠️ Legacy index 'srNo_1' removed.");
@@ -83,7 +82,7 @@ mongoose.connect(MONGO_URI)
   })
   .catch(err => {
     console.error("❌ MongoDB Connection Error:", err);
-    process.exit(1); // Exit process if database connection fails in production
+    process.exit(1); 
   });
 
 // --- DOWNLOAD API ROUTE ---
@@ -93,21 +92,21 @@ app.get('/api/download/:id', async (req, res) => {
         const file = await mongoose.model('File').findById(fileId);
 
         if (!file) {
-            return res.status(404).json({ success: false, message: "File record not found in database" });
+            return res.status(404).json({ success: false, message: "File record not found" });
         }
 
         const fileNameOnly = path.basename(file.path);
         const filePath = path.join(__dirname, 'uploads', fileNameOnly);
 
         if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ success: false, message: "Physical file is missing from server storage" });
+            return res.status(404).json({ success: false, message: "File missing from server" });
         }
 
         res.download(filePath, file.name);
 
     } catch (error) {
         console.error("❌ Download API Error:", error);
-        res.status(500).json({ success: false, message: "Internal Server Error during file download" });
+        res.status(500).json({ success: false, message: "Server error during download" });
     }
 });
 
@@ -128,8 +127,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: "An unexpected server error occurred." });
 });
 
-// Port configuration for Render/Production environment
+/**
+ * FINAL PORT BINDING FOR RENDER
+ * Added '0.0.0.0' to fix the "Port scan timeout" error.
+ */
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server is live on port: ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server is live and listening on port: ${PORT}`);
 });
