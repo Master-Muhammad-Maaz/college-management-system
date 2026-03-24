@@ -1,23 +1,10 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 
 const studentSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  // FIX: Changed 'contact' to 'mobile' to match StudentRecord naming
+  mobile: { type: String, required: true, unique: true },
+  dob: { type: String, required: true }
+});
 
-name:{
-type:String,
-required:true
-},
-
-contact:{
-type:String,
-required:true,
-unique:true
-},
-
-dob:{
-type:String,
-required:true
-}
-
-})
-
-module.exports = mongoose.model("Student",studentSchema)
+module.exports = mongoose.model("Student", studentSchema);
