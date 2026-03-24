@@ -14,7 +14,10 @@ export default function StudentLogin() {
     e.preventDefault()
 
     try {
-      const res = await fetch("http://localhost:5000/api/login", {
+      // FINAL FIX: Render URL added here
+      const API_BASE_URL = "https://college-management-system-ae1l.onrender.com";
+
+      const res = await fetch(`${API_BASE_URL}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contact, dob, role: "student" })
@@ -23,26 +26,68 @@ export default function StudentLogin() {
       const data = await res.json()
       
       if (data.success) {
-        alert(data.message)
-        router.push("/student-dashboard") // Student dashboard ka path yahan check karlein
+        alert("Login Successful!")
+        // User data ko localStorage mein save kar sakte hain agar dashboard pe naam dikhana ho
+        localStorage.setItem("user", JSON.stringify(data.user));
+        router.push("/student-dashboard") 
       } else {
-        alert(data.message)
+        alert(data.message || "Invalid credentials")
       }
     } catch (err) {
-      alert("Server se connection nahi ho paya. Backend check karein.")
+      console.error("Login Error:", err);
+      alert("Server se connection nahi ho paya. Please check if backend is live.")
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-900 to-black">
-      <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="bg-blue-800/40 backdrop-blur-md p-10 rounded-2xl shadow-xl w-96">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-900 to-black p-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 40 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        className="bg-blue-800/40 backdrop-blur-md p-10 rounded-2xl shadow-xl w-full max-w-md border border-white/10"
+      >
         <h1 className="text-3xl font-bold text-center text-white mb-8">Student Login</h1>
-        <form onSubmit={handleLogin} className="space-y-5">
-          <input type="text" placeholder="Contact Number" value={contact} onChange={(e) => setContact(e.target.value)} className="w-full p-3 rounded-lg bg-gray-900 text-white outline-none" required />
-          <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full p-3 rounded-lg bg-gray-900 text-white outline-none" required />
-          <button type="submit" className="w-full py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">Login</button>
+        
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div>
+            <label className="text-white text-xs mb-1 block opacity-70">Contact Number</label>
+            <input 
+              type="text" 
+              placeholder="Enter registered mobile" 
+              value={contact} 
+              onChange={(e) => setContact(e.target.value)} 
+              className="w-full p-3 rounded-lg bg-gray-900 text-white outline-none border border-white/10 focus:border-indigo-500 transition-all" 
+              required 
+            />
+          </div>
+
+          <div>
+            <label className="text-white text-xs mb-1 block opacity-70">Date of Birth</label>
+            <input 
+              type="date" 
+              value={dob} 
+              onChange={(e) => setDob(e.target.value)} 
+              className="w-full p-3 rounded-lg bg-gray-900 text-white outline-none border border-white/10 focus:border-indigo-500 transition-all" 
+              required 
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            className="w-full py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-500/20 active:scale-95 transition-all mt-2"
+          >
+            Login
+          </button>
         </form>
-        <p className="text-center text-gray-300 mt-4 text-sm">Don't have an account? <Link href="/register?role=student" className="text-blue-300 hover:underline">Register here</Link></p>
+
+        <div className="mt-6 text-center space-y-2">
+          <p className="text-gray-300 text-sm">
+            Don't have an account? <Link href="/register?role=student" className="text-sky-400 hover:underline font-medium">Register here</Link>
+          </p>
+          <Link href="/" className="inline-block text-xs text-gray-500 hover:text-white transition-colors">
+            ← Back to Home
+          </Link>
+        </div>
       </motion.div>
     </div>
   )
