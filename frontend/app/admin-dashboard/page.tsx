@@ -21,7 +21,8 @@ interface PathStep {
 }
 
 export default function AdminDashboard() {
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  // FINAL FIX: Yahan Render ka URL daal diya hai
+  const API_BASE_URL = "https://college-management-system-ae1l.onrender.com";
 
   const [folders, setFolders] = useState<RepoItem[]>([])
   const [files, setFiles] = useState<RepoItem[]>([])
@@ -37,6 +38,7 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     try {
+      // API call with updated URL
       const resF = await fetch(`${API_BASE_URL}/api/folders/${currentFolder}`)
       const dataF = await resF.json()
       if (dataF.success) setFolders(dataF.folders)
@@ -56,13 +58,11 @@ export default function AdminDashboard() {
     return () => window.removeEventListener("click", closeMenu)
   }, [currentFolder])
 
-  // FIX: Added RepoItem type to folder
   const enterFolder = (folder: RepoItem) => {
     setPath([...path, { id: folder._id, name: folder.name }])
     setCurrentFolder(folder._id)
   }
 
-  // FIX: Added number type to index
   const navigateTo = (index: number) => {
     const newPath = path.slice(0, index + 1)
     setPath(newPath)
@@ -116,36 +116,81 @@ export default function AdminDashboard() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!selectedItem) return
-    const url = selectedItem.type === 'folder' 
-      ? `${API_BASE_URL}/api/delete-folder/${selectedItem._id}` 
-      : `${API_BASE_URL}/api/delete-file/${selectedItem._id}`
-    
-    if (confirm(`Delete this ${selectedItem.type}?`)) {
-      try {
-        const res = await fetch(url, { method: "DELETE" })
-        const data = await res.json()
-        if (data.success) fetchData()
-      } catch (err) {
-        console.error("Delete error:", err)
-      }
-    }
-  }
-
+  // --- JSX Content Base Structure ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0f1d] to-[#000000] text-white p-6 md:p-10 font-sans" 
-      onContextMenu={(e) => { 
-        e.preventDefault(); 
-        setMenuPos({ x: e.clientX, y: e.clientY, visible: true }); 
-        setSelectedItem(null); 
-      }}>
-      
-      {/* Rest of your JSX remains the same */}
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0f1d] to-[#000000] text-white p-6 md:p-10 font-sans">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between mb-8 gap-6 border-b border-white/10 pb-6">
-         {/* ... Your JSX Content ... */}
+          <div className="flex items-center gap-4">
+              <div className="bg-indigo-600 p-3 rounded-xl shadow-lg shadow-indigo-500/20">
+                  <LayoutDashboard size={28} />
+              </div>
+              <div>
+                  <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+                  <p className="text-gray-400 text-sm">Manage your files and students</p>
+              </div>
+          </div>
+          <div className="flex gap-3">
+              <Link href="/admin-dashboard/students" className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2.5 rounded-lg transition-all border border-white/10 text-sm font-medium">
+                  <Users size={18} /> Students
+              </Link>
+              <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 rounded-lg transition-all shadow-lg shadow-indigo-600/20 text-sm font-medium">
+                  <FolderPlus size={18} /> New Folder
+              </button>
+          </div>
       </div>
-      {/* ... and so on ... */}
+
+      {/* Path Navigation */}
+      <div className="flex items-center gap-2 text-sm text-gray-400 mb-6 overflow-x-auto whitespace-nowrap pb-2">
+          {path.map((step, index) => (
+              <div key={step.id} className="flex items-center gap-2">
+                  <button onClick={() => navigateTo(index)} className={`hover:text-white transition-colors ${index === path.length - 1 ? 'text-indigo-400 font-semibold' : ''}`}>
+                      {step.name === "Root" ? <Home size={16} /> : step.name}
+                  </button>
+                  {index < path.length - 1 && <ChevronRight size={14} className="text-gray-600" />}
+              </div>
+          ))}
+      </div>
+
+      {/* Folders and Files Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-5">
+          {folders.map(folder => (
+              <div key={folder._id} onDoubleClick={() => enterFolder(folder)} className="flex flex-col items-center p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-indigo-500/30 transition-all cursor-pointer group">
+                  <FolderOpen size={48} className="text-amber-400 mb-3 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium text-center truncate w-full">{folder.name}</span>
+              </div>
+          ))}
+          {files.map(file => (
+              <div key={file._id} className="flex flex-col items-center p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-indigo-500/10 hover:border-indigo-500/30 transition-all cursor-pointer group">
+                  <FileText size={48} className="text-indigo-400 mb-3 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium text-center truncate w-full">{file.name}</span>
+              </div>
+          ))}
+      </div>
+
+      {/* Modal for Folder Creation */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#151b2d] border border-white/10 p-8 rounded-2xl w-full max-w-md shadow-2xl">
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+              <FolderPlus className="text-indigo-400" /> Create New Folder
+            </h2>
+            <form onSubmit={handleCreateFolder} className="space-y-4">
+              <input 
+                type="text" 
+                placeholder="Folder Name" 
+                value={folderName} 
+                onChange={(e) => setFolderName(e.target.value)}
+                className="w-full p-3 rounded-xl bg-gray-900 border border-white/10 outline-none focus:border-indigo-500"
+                autoFocus
+              />
+              <div className="flex gap-3 justify-end mt-6">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">Cancel</button>
+                <button type="submit" className="px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 transition-colors font-semibold">Create Folder</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
