@@ -13,7 +13,7 @@ const studentRecordSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// SR No aur Course ka combination unique hona chahiye taake B.Sc-I aur M.Sc-I dono mein Roll 1 reh sake
+// SR No aur Course ka combination unique hona chahiye
 studentRecordSchema.index({ srNo: 1, course: 1 }, { unique: true });
 
 module.exports = mongoose.model("StudentRecord", studentRecordSchema);
