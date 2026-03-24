@@ -3,9 +3,9 @@ const router = express.Router();
 const Admin = require("../models/Admin");
 const Student = require("../models/Student");
 const Folder = require("../models/Folder");
+const File = require("../models/File");
 const multer = require("multer");
 const path = require("path");
-const File = require("../models/File");
 
 // --- AUTHENTICATION ROUTES ---
 
@@ -53,30 +53,32 @@ router.post("/login", async (req, res) => {
 
 // --- FOLDER MANAGEMENT ROUTES ---
 
-// 1. Create Folder (Sub-folder support ke sath)
+// 1. Create Folder
 router.post("/create-folder", async (req, res) => {
   try {
     const { name, parentId } = req.body; 
-    // Agar parentId frontend se aayi hai toh wo subfolder banega, warna root folder
     const newFolder = new Folder({ 
       name, 
       parentId: parentId && parentId !== "root" ? parentId : null 
     });
     await newFolder.save();
-    res.json({ success: true, message: "Folder created successfully", folder: newFolder });
+    res.json({ success: true, message: "Folder created successfully", folder: { ...newFolder._doc, type: 'folder' } });
   } catch (err) {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-// 2. Get Folders by Parent ID
+// 2. Get Folders by Parent ID (Optimized for Frontend Icons)
 router.get("/folders/:parentId", async (req, res) => {
   try {
     const { parentId } = req.params;
-    // Agar parentId 'root' hai toh sirf wo folders lao jinka parentId null hai
     const query = parentId === "root" ? { parentId: null } : { parentId };
-    const folders = await Folder.find(query);
-    res.json({ success: true, folders });
+    const folders = await Folder.find(query).lean();
+    
+    // Har folder ke saath 'type' tag bhejna taaki dashboard icons sahi dikhein
+    const foldersWithType = folders.map(f => ({ ...f, type: 'folder' }));
+    
+    res.json({ success: true, folders: foldersWithType });
   } catch (err) {
     res.status(500).json({ success: false, message: "Server error" });
   }
@@ -86,12 +88,13 @@ router.get("/folders/:parentId", async (req, res) => {
 router.delete("/delete-folder/:id", async (req, res) => {
   try {
     await Folder.findByIdAndDelete(req.params.id);
-    // Note: Future mein yahan nested sub-folders delete karne ka recursive logic add karenge
     res.json({ success: true, message: "Folder deleted successfully" });
   } catch (err) {
     res.status(500).json({ success: false, message: "Error deleting folder" });
   }
 });
+
+// --- FILE MANAGEMENT ROUTES ---
 
 // Multer Storage Configuration
 const storage = multer.diskStorage({
@@ -102,7 +105,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// 1. Upload File Route
+// 1. Upload File
 router.post("/upload", upload.single("file"), async (req, res) => {
   try {
     const { folderId } = req.body;
@@ -112,19 +115,23 @@ router.post("/upload", upload.single("file"), async (req, res) => {
       folderId: folderId === "root" ? null : folderId
     });
     await newFile.save();
-    res.json({ success: true, message: "File uploaded successfully", file: newFile });
+    res.json({ success: true, message: "File uploaded successfully", file: { ...newFile._doc, type: 'file' } });
   } catch (err) {
     res.status(500).json({ success: false, message: "Upload failed" });
   }
 });
 
-// 2. Get Files by Folder ID
+// 2. Get Files by Folder ID (Optimized for Frontend Icons)
 router.get("/files/:folderId", async (req, res) => {
   try {
     const { folderId } = req.params;
     const query = folderId === "root" ? { folderId: null } : { folderId };
-    const files = await File.find(query);
-    res.json({ success: true, files });
+    const files = await File.find(query).lean();
+    
+    // Har file ke saath 'type' tag bhejna
+    const filesWithType = files.map(f => ({ ...f, type: 'file' }));
+    
+    res.json({ success: true, files: filesWithType });
   } catch (err) {
     res.status(500).json({ success: false, message: "Error fetching files" });
   }
