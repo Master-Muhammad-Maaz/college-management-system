@@ -7,7 +7,7 @@ const studentRecordSchema = new mongoose.Schema({
   mobile: { type: String, required: true },
   course: { 
     type: String, 
-    required: true, 
+    required: true,  
     enum: ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II"],
     default: "B.Sc-I"
   }
