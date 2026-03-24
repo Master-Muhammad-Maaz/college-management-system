@@ -9,7 +9,7 @@ import {
 import axios from "axios"
 import Link from "next/link"
 
-// --- FIX: TypeScript Types defined here to solve Vercel Build Error ---
+// Types to prevent Vercel Build Errors
 interface RepoItem {
   _id: string;
   name: string;
@@ -22,7 +22,6 @@ interface PathStep {
 }
 
 export default function AdminDashboard() {
-  // Aapka Render Backend URL
   const API_BASE_URL = "https://college-management-system-ae1l.onrender.com";
 
   const [folders, setFolders] = useState<RepoItem[]>([])
@@ -58,7 +57,6 @@ export default function AdminDashboard() {
     return () => window.removeEventListener("click", closeMenu)
   }, [currentFolder])
 
-  // --- FIX: Added 'RepoItem' type to fix the screenshot error ---
   const enterFolder = (folder: RepoItem) => {
     setPath([...path, { id: folder._id, name: folder.name }])
     setCurrentFolder(folder._id)
@@ -76,7 +74,10 @@ export default function AdminDashboard() {
     const res = await fetch(`${API_BASE_URL}/api/create-folder`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: folderName, parentId: currentFolder === "root" ? null : currentFolder })
+      body: JSON.stringify({ 
+        name: folderName, 
+        parentId: currentFolder === "root" ? null : currentFolder 
+      })
     })
     const data = await res.json()
     if (data.success) { setFolderName(""); setIsModalOpen(false); fetchData() }
@@ -87,7 +88,10 @@ export default function AdminDashboard() {
     if (!file) return
     const formData = new FormData()
     formData.append("file", file)
-    formData.append("folderId", currentFolder)
+    
+    // FIX: Send empty string for root folder to match backend logic
+    formData.append("folderId", currentFolder === "root" ? "" : currentFolder)
+    
     setIsUploading(true)
     setUploadProgress(0)
     try {
@@ -129,7 +133,7 @@ export default function AdminDashboard() {
 
         <div className="flex items-center gap-4 bg-black/40 p-1.5 rounded-2xl border border-white/5">
           <Link href="/admin-dashboard">
-            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-xl text-sm font-bold shadow-lg">
+            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-xl text-sm font-bold shadow-lg transition-transform active:scale-95">
               <LayoutDashboard size={16} /> Repository
             </button>
           </Link>
@@ -144,7 +148,7 @@ export default function AdminDashboard() {
       {/* BREADCRUMBS */}
       <div className="max-w-6xl mx-auto mb-6 flex items-center gap-2 bg-white/5 p-3 rounded-lg border border-white/5 overflow-x-auto">
         {path.map((step, index) => (
-          <div key={step.id} className="flex items-center gap-2">
+          <div key={step.id} className="flex items-center gap-2 whitespace-nowrap">
             <button onClick={() => navigateTo(index)} className={`hover:text-blue-400 transition text-sm font-medium ${index === path.length - 1 ? "text-blue-400" : "text-gray-400"}`}>
                 {step.name === "Root" ? <Home size={16} /> : step.name}
             </button>
@@ -162,24 +166,24 @@ export default function AdminDashboard() {
               <span>{uploadProgress}%</span>
             </div>
             <div className="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
-              <motion.div className="bg-blue-500 h-full shadow-[0_0_15px_rgba(59,130,246,0.8)]" initial={{ width: 0 }} animate={{ width: `${uploadProgress}%` }} />
+              <motion.div className="bg-blue-500 h-full" initial={{ width: 0 }} animate={{ width: `${uploadProgress}%` }} transition={{ duration: 0.3 }} />
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* GRID VIEW */}
-      <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
+      <div className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8">
         {folders.map((f) => (
           <motion.div key={f._id} 
             onContextMenu={(e) => { e.stopPropagation(); e.preventDefault(); setSelectedItem({ ...f, type: 'folder' }); setMenuPos({ x: e.pageX, y: e.pageY, visible: true }); }} 
             onDoubleClick={() => enterFolder(f)} 
             className="flex flex-col items-center group cursor-pointer" 
             whileHover={{ scale: 1.05 }}>
-            <div className="bg-blue-800/20 p-6 rounded-xl group-hover:bg-blue-700/40 border border-white/5 shadow-lg">
+            <div className="bg-blue-800/20 p-6 rounded-xl group-hover:bg-blue-700/40 border border-white/5 shadow-lg transition-colors">
                 <FolderOpen size={50} className="text-sky-400" />
             </div>
-            <span className="mt-2 text-sm font-medium text-center truncate w-full">{f.name}</span>
+            <span className="mt-2 text-sm font-medium text-center truncate w-full px-2">{f.name}</span>
           </motion.div>
         ))}
         {files.map((file) => (
@@ -187,10 +191,10 @@ export default function AdminDashboard() {
             onContextMenu={(e) => { e.stopPropagation(); e.preventDefault(); setSelectedItem({ ...file, type: 'file' }); setMenuPos({ x: e.pageX, y: e.pageY, visible: true }); }} 
             className="flex flex-col items-center group cursor-pointer" 
             whileHover={{ scale: 1.05 }}>
-            <div className="bg-gray-800/40 p-6 rounded-xl group-hover:bg-gray-700/60 border border-white/5 text-green-400">
+            <div className="bg-gray-800/40 p-6 rounded-xl group-hover:bg-gray-700/60 border border-white/5 text-green-400 transition-colors">
                 <FileIcon size={50} />
             </div>
-            <span className="mt-2 text-xs text-center break-all line-clamp-2 w-24">{file.name}</span>
+            <span className="mt-2 text-xs text-center break-all line-clamp-2 w-full px-2">{file.name}</span>
           </motion.div>
         ))}
       </div>
@@ -223,10 +227,10 @@ export default function AdminDashboard() {
           <div className="bg-[#12141c] p-8 rounded-2xl w-80 border border-blue-500/50">
               <h2 className="text-xl font-bold mb-4 text-blue-400">New Folder</h2>
               <form onSubmit={handleCreateFolder}>
-                <input className="w-full p-3 bg-gray-800 rounded-lg mb-4 outline-none border border-white/5" value={folderName} onChange={(e)=>setFolderName(e.target.value)} autoFocus />
+                <input className="w-full p-3 bg-gray-800 rounded-lg mb-4 outline-none border border-white/5" value={folderName} onChange={(e)=>setFolderName(e.target.value)} autoFocus placeholder="Enter folder name" />
                 <div className="flex justify-end gap-3 font-bold">
-                    <button type="button" onClick={()=>setIsModalOpen(false)}>Back</button>
-                    <button type="submit" className="bg-blue-600 px-6 py-2 rounded-lg">Add</button>
+                    <button type="button" onClick={()=>setIsModalOpen(false)} className="text-gray-400 hover:text-white transition-colors">Cancel</button>
+                    <button type="submit" className="bg-blue-600 px-6 py-2 rounded-lg hover:bg-blue-500 transition-colors">Add</button>
                 </div>
               </form>
           </div>
