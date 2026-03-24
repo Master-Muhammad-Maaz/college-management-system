@@ -101,10 +101,10 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { name: "Ms. R. S. Kale", role: "HOD" },
+              { name: "Mrs. R. S. Kale", role: "HOD" },
               { name: "Dr. A. B. Dube", role: "Professor" },
               { name: "Dr. S. M. Chavan", role: "Professor" },
-              { name: "Ms. M. R. Gudade", role: "Professor" }
+              { name: "Mrs. M. R. Gudade", role: "Professor" }
             ].map((fac, i) => (
               <div key={i}>
                 <p className="text-xs font-black text-slate-800">{fac.name}</p>
