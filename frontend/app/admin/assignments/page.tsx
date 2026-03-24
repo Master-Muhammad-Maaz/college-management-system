@@ -1,6 +1,6 @@
 "use client"
 import { useState, ChangeEvent, FormEvent } from "react"
-import { BookOpen, Upload, PenTool, Calendar, User, FileText, Send, ArrowLeft } from "lucide-react"
+import { BookOpen, Upload, PenTool, Calendar, Send, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
 // Define the structure of your semester mapping
@@ -19,6 +19,9 @@ export default function AssignmentManagement() {
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
 
+  // RENDER BACKEND URL
+  const API_BASE_URL = "https://college-management-system-ae1l.onrender.com";
+
   const semesterMap: Record<CourseType, string[]> = {
     "B.Sc-I": ["Sem-1", "Sem-2"],
     "B.Sc-II": ["Sem-3", "Sem-4"],
@@ -27,14 +30,12 @@ export default function AssignmentManagement() {
     "M.Sc-II": ["Sem-3", "Sem-4"]
   }
 
-  // FIXED: Added TypeScript event typing
   const handleCourseChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const selectedCourse = e.target.value as CourseType;
     setCourse(selectedCourse);
     setFormData({ ...formData, semester: semesterMap[selectedCourse][0] });
   }
 
-  // FIXED: Added FormEvent typing
   const handleUpload = async (e: FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -50,7 +51,8 @@ export default function AssignmentManagement() {
     if (type === "file" && file) data.append("file", file)
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/assignments/add`, {
+      // Updated to use Render Backend URL
+      const res = await fetch(`${API_BASE_URL}/api/assignments/add`, {
         method: "POST",
         body: data
       })
@@ -68,16 +70,16 @@ export default function AssignmentManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0c14] text-white p-6 md:p-10">
+    <div className="min-h-screen bg-[#0a0c14] text-white p-6 md:p-10 font-sans">
       <div className="max-w-4xl mx-auto">
         
-        {/* Navigation */}
+        {/* Navigation - FIXED PATH TO /admin-dashboard */}
         <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
-                <Link href="/admin" className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all border border-white/5">
+                <Link href="/admin-dashboard" className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all border border-white/5">
                     <ArrowLeft size={20} className="text-gray-400" />
                 </Link>
-                <h1 className="text-2xl font-black flex items-center gap-3">
+                <h1 className="text-2xl font-black flex items-center gap-3 tracking-tight">
                     <BookOpen className="text-sky-400" /> ASSIGNMENT PANEL
                 </h1>
             </div>
@@ -130,7 +132,6 @@ export default function AssignmentManagement() {
               </select>
             </div>
 
-            {/* Added: Deadline Picker */}
             <div className="md:col-span-2 space-y-2">
               <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Submission Deadline *</label>
               <div className="relative">
@@ -139,7 +140,6 @@ export default function AssignmentManagement() {
               </div>
             </div>
 
-            {/* Conditional Input */}
             <div className="md:col-span-2 mt-4">
               {type === "text" ? (
                 <div className="space-y-2">
