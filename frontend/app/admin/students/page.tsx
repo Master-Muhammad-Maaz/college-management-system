@@ -1,15 +1,17 @@
 "use client"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Users, Calendar, Save, UploadCloud, Loader2, Play, CheckCircle, Coffee, FileDown, UserPlus, BookOpen } from "lucide-react"
+import { Users, Calendar, Play, CheckCircle, Coffee, FileDown, UserPlus, BookOpen } from "lucide-react"
 import Link from "next/link"
 import AddStudentModal from "../../../components/AddStudentModal";
 
-// --- TYPES & INTERFACES ---
+// --- TYPES & INTERFACES (Updated for Consistency) ---
 interface Student {
   _id: string;
-  srNo: string;
+  srNo: number; // Changed to number to match MongoDB Record
   name: string;
+  mobile: string; // Added mobile field
+  dob: string;    // Added dob field
 }
 
 interface AttendanceRecord {
@@ -18,7 +20,6 @@ interface AttendanceRecord {
 }
 
 export default function StudentManagement() {
-  // Properly typing the states
   const [students, setStudents] = useState<Student[]>([])
   const [selectedCourse, setSelectedCourse] = useState("B.Sc-I")
   const [attendance, setAttendance] = useState<Record<string, string>>({}) 
@@ -29,32 +30,39 @@ export default function StudentManagement() {
 
   const courses = ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II"]
 
+  // API Base URL (Render URL for Production, Localhost for Dev)
+  const API_BASE = "https://college-management-system-ae1l.onrender.com";
+
   const fetchStudentsAndAttendance = async () => {
     try {
-      const resSt = await fetch(`http://localhost:5000/api/students/list?course=${selectedCourse}`)
+      // Fetching Student List
+      const resSt = await fetch(`${API_BASE}/api/students/list?course=${selectedCourse}`)
       const dataSt = await resSt.json()
       if (dataSt.success) setStudents(dataSt.students)
 
-      const resAt = await fetch(`http://localhost:5000/api/attendance/today/${selectedDate}/${selectedCourse}`)
+      // Fetching Attendance Records
+      const resAt = await fetch(`${API_BASE}/api/attendance/today/${selectedDate}/${selectedCourse}`)
       const dataAt = await resAt.json()
       
       if (dataAt.success) {
-        // FIX: Defined the type for the local map
         const attendanceMap: Record<string, string> = {}
-        // FIX: Added type 'AttendanceRecord' to 'rec'
         dataAt.records.forEach((rec: AttendanceRecord) => { 
           attendanceMap[rec.studentId] = rec.status 
         })
         setAttendance(attendanceMap)
       }
-    } catch (err) { console.error(err) }
+    } catch (err) { 
+      console.error("Fetch Error:", err) 
+    }
   }
 
-  useEffect(() => { fetchStudentsAndAttendance() }, [selectedDate, selectedCourse])
+  useEffect(() => { 
+    fetchStudentsAndAttendance() 
+  }, [selectedDate, selectedCourse])
 
   const markAttendance = async (studentId: string, status: string) => {
     try {
-      const res = await fetch("http://localhost:5000/api/attendance/mark", {
+      const res = await fetch(`${API_BASE}/api/attendance/mark`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentId, date: selectedDate, status, course: selectedCourse })
@@ -64,21 +72,27 @@ export default function StudentManagement() {
         setAttendance(prev => ({ ...prev, [studentId]: status }))
         if (isSwipeMode) setCurrentIndex(prev => prev + 1)
       }
-    } catch (err) { alert("Error!") }
+    } catch (err) { 
+      alert("Attendance marking failed!") 
+    }
   }
 
   const downloadReport = () => {
-    window.open(`http://localhost:5000/api/attendance/export-report/${selectedCourse}`, "_blank");
+    window.open(`${API_BASE}/api/attendance/export-report/${selectedCourse}`, "_blank");
   }
 
   const markHoliday = async () => {
-    if (!confirm("Mark Holiday?")) return
-    await fetch("http://localhost:5000/api/attendance/mark-holiday", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: selectedDate, course: selectedCourse })
-    })
-    fetchStudentsAndAttendance()
+    if (!confirm("Are you sure you want to mark a holiday for this date?")) return
+    try {
+      await fetch(`${API_BASE}/api/attendance/mark-holiday`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: selectedDate, course: selectedCourse })
+      })
+      fetchStudentsAndAttendance()
+    } catch (err) {
+      alert("Holiday marking failed!")
+    }
   }
 
   return (
