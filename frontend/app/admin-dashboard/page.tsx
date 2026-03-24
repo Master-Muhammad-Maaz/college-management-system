@@ -9,23 +9,33 @@ import {
 import axios from "axios"
 import Link from "next/link"
 
+// TYPESCRIPT INTERFACES (Build error fix karne ke liye)
+interface RepoItem {
+  _id: string;
+  name: string;
+  type: 'folder' | 'file';
+}
+
+interface PathStep {
+  id: string;
+  name: string;
+}
+
 export default function AdminDashboard() {
-  // --- FINAL RENDER BACKEND URL ---
   const API_BASE_URL = "https://college-management-system-ae1l.onrender.com";
 
-  const [folders, setFolders] = useState([])
-  const [files, setFiles] = useState([])
+  const [folders, setFolders] = useState<RepoItem[]>([])
+  const [files, setFiles] = useState<RepoItem[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [folderName, setFolderName] = useState("")
   const [currentFolder, setCurrentFolder] = useState("root")
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
-  const [path, setPath] = useState([{ id: "root", name: "Root" }])
-  const fileInputRef = useRef(null)
+  const [path, setPath] = useState<PathStep[]>([{ id: "root", name: "Root" }])
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0, visible: false })
-  const [selectedItem, setSelectedItem] = useState(null)
+  const [selectedItem, setSelectedItem] = useState<RepoItem | null>(null)
 
-  // Fetching folders and files from Render
   const fetchData = async () => {
     try {
       const resF = await fetch(`${API_BASE_URL}/api/folders/${currentFolder}`)
@@ -47,20 +57,21 @@ export default function AdminDashboard() {
     return () => window.removeEventListener("click", closeMenu)
   }, [currentFolder])
 
-  const enterFolder = (folder) => {
+  // FIXED: Added type for 'folder' parameter
+  const enterFolder = (folder: RepoItem) => {
     setPath([...path, { id: folder._id, name: folder.name }])
     setCurrentFolder(folder._id)
   }
 
-  const navigateTo = (index) => {
+  const navigateTo = (index: number) => {
     const newPath = path.slice(0, index + 1)
     setPath(newPath)
     setCurrentFolder(newPath[newPath.length - 1].id)
   }
 
-  const handleCreateFolder = async (e) => {
+  const handleCreateFolder = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!folderName) return
+    if (!folderName.trim()) return
     const res = await fetch(`${API_BASE_URL}/api/create-folder`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -70,8 +81,8 @@ export default function AdminDashboard() {
     if (data.success) { setFolderName(""); setIsModalOpen(false); fetchData() }
   }
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0]
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
     if (!file) return
     const formData = new FormData()
     formData.append("file", file)
@@ -80,7 +91,9 @@ export default function AdminDashboard() {
     setUploadProgress(0)
     try {
       const res = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
-        onUploadProgress: (p) => setUploadProgress(Math.round((p.loaded * 100) / p.total)),
+        onUploadProgress: (p) => {
+            if (p.total) setUploadProgress(Math.round((p.loaded * 100) / p.total))
+        },
       })
       if (res.data.success) {
         fetchData()
@@ -105,7 +118,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-blue-900 to-black text-white p-6 md:p-10 font-sans" onContextMenu={(e) => { e.preventDefault(); setMenuPos({ x: e.pageX, y: e.pageY, visible: true }); setSelectedItem(null); }}>
+    <div className="min-h-screen bg-gradient-to-r from-blue-900 to-black text-white p-6 md:p-10" onContextMenu={(e) => { e.preventDefault(); setMenuPos({ x: e.pageX, y: e.pageY, visible: true }); setSelectedItem(null); }}>
       
       {/* HEADER */}
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between mb-8 gap-6 border-b border-white/10 pb-6">
@@ -115,20 +128,20 @@ export default function AdminDashboard() {
 
         <div className="flex items-center gap-4 bg-black/40 p-1.5 rounded-2xl border border-white/5">
           <Link href="/admin-dashboard">
-            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95">
+            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-xl text-sm font-bold shadow-lg">
               <LayoutDashboard size={16} /> Repository
             </button>
           </Link>
           <Link href="/admin/students">
             <button className="flex items-center gap-2 px-4 py-2 hover:bg-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-all">
-              <Users size={16} /> Students & Attendance
+              <Users size={16} /> Students
             </button>
           </Link>
         </div>
       </div>
 
       {/* BREADCRUMBS */}
-      <div className="max-w-6xl mx-auto mb-6 flex items-center gap-2 bg-white/5 p-3 rounded-lg border border-white/5 overflow-x-auto whitespace-nowrap">
+      <div className="max-w-6xl mx-auto mb-6 flex items-center gap-2 bg-white/5 p-3 rounded-lg border border-white/5 overflow-x-auto">
         {path.map((step, index) => (
           <div key={step.id} className="flex items-center gap-2">
             <button onClick={() => navigateTo(index)} className={`hover:text-blue-400 transition text-sm font-medium ${index === path.length - 1 ? "text-blue-400" : "text-gray-400"}`}>
@@ -139,11 +152,11 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* UPLOAD PROGRESS BAR */}
+      {/* PROGRESS BAR */}
       <AnimatePresence>
         {isUploading && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="max-w-6xl mx-auto mb-6 bg-gray-900/80 p-4 rounded-xl border border-blue-500/30">
-            <div className="flex justify-between mb-2 text-xs font-bold uppercase tracking-widest text-blue-400">
+            <div className="flex justify-between mb-2 text-xs font-bold uppercase text-blue-400">
               <span className="flex items-center gap-2"><Loader2 className="animate-spin" size={14} /> Uploading...</span>
               <span>{uploadProgress}%</span>
             </div>
@@ -154,7 +167,7 @@ export default function AdminDashboard() {
         )}
       </AnimatePresence>
 
-      {/* GRID AREA */}
+      {/* GRID */}
       <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
         {folders.map((f) => (
           <motion.div key={f._id} 
@@ -162,8 +175,8 @@ export default function AdminDashboard() {
             onDoubleClick={() => enterFolder(f)} 
             className="flex flex-col items-center group cursor-pointer" 
             whileHover={{ scale: 1.05 }}>
-            <div className="bg-blue-800/20 p-6 rounded-xl group-hover:bg-blue-700/40 border border-white/5 transition-all shadow-lg"><FolderOpen size={50} className="text-sky-400" /></div>
-            <span className="mt-2 text-sm font-medium truncate w-full text-center px-2">{f.name}</span>
+            <div className="bg-blue-800/20 p-6 rounded-xl group-hover:bg-blue-700/40 border border-white/5 shadow-lg"><FolderOpen size={50} className="text-sky-400" /></div>
+            <span className="mt-2 text-sm font-medium text-center truncate w-full">{f.name}</span>
           </motion.div>
         ))}
         {files.map((file) => (
@@ -171,22 +184,22 @@ export default function AdminDashboard() {
             onContextMenu={(e) => { e.stopPropagation(); e.preventDefault(); setSelectedItem({ ...file, type: 'file' }); setMenuPos({ x: e.pageX, y: e.pageY, visible: true }); }} 
             className="flex flex-col items-center group cursor-pointer" 
             whileHover={{ scale: 1.05 }}>
-            <div className="bg-gray-800/40 p-6 rounded-xl group-hover:bg-gray-700/60 border border-white/5 transition-all shadow-lg text-green-400"><FileIcon size={50} /></div>
-            <span className="mt-2 text-xs text-center break-all w-24 line-clamp-2 px-1">{file.name}</span>
+            <div className="bg-gray-800/40 p-6 rounded-xl group-hover:bg-gray-700/60 border border-white/5 text-green-400"><FileIcon size={50} /></div>
+            <span className="mt-2 text-xs text-center break-all line-clamp-2 w-24">{file.name}</span>
           </motion.div>
         ))}
       </div>
 
       <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
 
-      {/* CONTEXT MENU (RIGHT CLICK) */}
+      {/* CONTEXT MENU */}
       <AnimatePresence>
         {menuPos.visible && (
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ top: menuPos.y, left: menuPos.x }} className="fixed bg-[#0f1117] border border-white/10 shadow-2xl rounded-lg py-2 w-52 z-50">
             {!selectedItem ? (
               <>
                 <button onClick={() => setIsModalOpen(true)} className="w-full flex items-center px-4 py-2 hover:bg-blue-600 transition text-sm"><FolderPlus size={16} className="mr-2" /> New Folder</button>
-                <button onClick={() => fileInputRef.current.click()} className="w-full flex items-center px-4 py-2 hover:bg-blue-600 transition text-sm"><Upload size={16} className="mr-2" /> Upload File</button>
+                <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center px-4 py-2 hover:bg-blue-600 transition text-sm"><Upload size={16} className="mr-2" /> Upload File</button>
               </>
             ) : (
               <>
@@ -199,17 +212,14 @@ export default function AdminDashboard() {
         )}
       </AnimatePresence>
 
-      {/* CREATE FOLDER MODAL */}
+      {/* MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#12141c] p-8 rounded-2xl w-80 border border-blue-500/50 shadow-2xl">
-              <h2 className="text-xl font-bold mb-4 text-blue-400 flex items-center gap-2"><FolderPlus size={20} /> New Folder</h2>
+          <div className="bg-[#12141c] p-8 rounded-2xl w-80 border border-blue-500/50">
+              <h2 className="text-xl font-bold mb-4 text-blue-400">New Folder</h2>
               <form onSubmit={handleCreateFolder}>
-                <input className="w-full p-3 bg-gray-800 rounded-lg mb-4 outline-none border border-white/5 focus:border-blue-500" value={folderName} onChange={(e)=>setFolderName(e.target.value)} placeholder="Folder name..." autoFocus />
-                <div className="flex justify-end gap-3 font-bold">
-                    <button type="button" className="text-gray-400 hover:text-white" onClick={()=>setIsModalOpen(false)}>Back</button>
-                    <button type="submit" className="bg-blue-600 px-6 py-2 rounded-lg shadow-lg active:scale-95">Add</button>
-                </div>
+                <input className="w-full p-3 bg-gray-800 rounded-lg mb-4 outline-none border border-white/5" value={folderName} onChange={(e)=>setFolderName(e.target.value)} autoFocus />
+                <div className="flex justify-end gap-3 font-bold"><button type="button" onClick={()=>setIsModalOpen(false)}>Back</button><button type="submit" className="bg-blue-600 px-6 py-2 rounded-lg">Add</button></div>
               </form>
           </div>
         </div>
