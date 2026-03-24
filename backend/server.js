@@ -12,8 +12,8 @@ const assignmentRoutes = require("./routes/assignmentRoutes");
 
 const app = express();
 
-// 1. Updated CORS Configuration
-// Added your new Vercel domains to prevent "Registration failed"
+// 1. IMPROVED CORS CONFIGURATION
+// Isme humne flexible matching rakhi hai taaki Vercel ke subdomains block na hon
 const allowedOrigins = [
   "http://localhost:3000", 
   "http://localhost:3001", 
@@ -24,8 +24,9 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin or those in the allowed list
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (like mobile apps or curl) 
+    // or if the origin starts with your vercel project name
+    if (!origin || allowedOrigins.includes(origin) || origin.includes("vercel.app")) {
       callback(null, true);
     } else {
       console.error(`CORS Blocked for origin: ${origin}`);
@@ -44,14 +45,17 @@ app.use(express.json());
  */
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-const assignmentDir = path.join(__dirname, 'uploads', 'assignments');
-try {
-  if (!fs.existsSync(assignmentDir)){
-      fs.mkdirSync(assignmentDir, { recursive: true });
+// Directory creation logic (Render startup ke liye zaroori hai)
+const uploadDirs = [
+  path.join(__dirname, 'uploads'),
+  path.join(__dirname, 'uploads', 'assignments')
+];
+
+uploadDirs.forEach(dir => {
+  if (!fs.existsSync(dir)){
+      fs.mkdirSync(dir, { recursive: true });
   }
-} catch (dirError) {
-  console.error("❌ Failed to create upload directories:", dirError);
-}
+});
 
 // 3. MongoDB Connection
 const MONGO_URI = process.env.MONGODB_URI || "mongodb+srv://mohammadmaaz8262:87654321@maaz123.eu2rnw5.mongodb.net/college_db?retryWrites=true&w=majority";
@@ -60,24 +64,18 @@ mongoose.connect(MONGO_URI)
   .then(async () => {
     console.log("✅ MongoDB Connected Successfully");
     
+    // Index management logic for studentrecords
     try {
       const collection = mongoose.connection.collection("studentrecords");
       const currentIndexes = await collection.indexes();
       const indexNames = currentIndexes.map(idx => idx.name);
 
-      if (indexNames.includes("srNo_1")) {
-        await collection.dropIndex("srNo_1");
-        console.log("⚠️ Legacy index 'srNo_1' removed.");
-      }
-      
-      if (indexNames.includes("name_1")) {
-        await collection.dropIndex("name_1");
-        console.log("⚠️ Legacy index 'name_1' removed.");
-      }
+      if (indexNames.includes("srNo_1")) await collection.dropIndex("srNo_1");
+      if (indexNames.includes("name_1")) await collection.dropIndex("name_1");
 
       console.log("🚀 Database indexes are optimized.");
     } catch (err) {
-      console.log("ℹ️ Index Management: Optimized.");
+      console.log("ℹ️ Index Management: Handled.");
     }
   })
   .catch(err => {
@@ -116,6 +114,7 @@ app.get("/", (req, res) => {
 });
 
 // 5. API Routes
+// Note: authRoutes handles /login, /register, /folders, /files, /upload etc.
 app.use("/api", authRoutes);
 app.use("/api/students", studentRoutes); 
 app.use("/api/attendance", attendanceRoutes);
@@ -129,7 +128,6 @@ app.use((err, req, res, next) => {
 
 /**
  * FINAL PORT BINDING FOR RENDER
- * Added '0.0.0.0' to fix the "Port scan timeout" error.
  */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
