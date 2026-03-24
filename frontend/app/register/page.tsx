@@ -18,10 +18,9 @@ function RegisterForm() {
 
     try {
       /**
-       * DYNAMIC API URL
-       * Uses the Render URL from Vercel settings, or localhost if developing locally.
+       * FINAL FIX: Render URL updated directly
        */
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const API_BASE_URL = "https://college-management-system-ae1l.onrender.com";
 
       const res = await fetch(`${API_BASE_URL}/api/register`, {
         method: "POST",
@@ -49,30 +48,39 @@ function RegisterForm() {
         {role === "admin" ? "Admin Registration" : "Student Registration"}
       </h1>
       <form onSubmit={handleRegister} className="space-y-5">
-        <input 
-          type="text" 
-          placeholder="Full Name" 
-          value={name} 
-          onChange={(e) => setName(e.target.value)} 
-          className="w-full p-3 rounded-lg bg-gray-900 text-white outline-none border border-white/10 focus:border-indigo-500" 
-          required 
-        />
-        <input 
-          type="text" 
-          placeholder="Contact Number" 
-          value={contact} 
-          onChange={(e) => setContact(e.target.value)} 
-          className="w-full p-3 rounded-lg bg-gray-900 text-white outline-none border border-white/10 focus:border-indigo-500" 
-          required 
-        />
-        <input 
-          type="date" 
-          value={dob} 
-          onChange={(e) => setDob(e.target.value)} 
-          className="w-full p-3 rounded-lg bg-gray-900 text-white outline-none border border-white/10 focus:border-indigo-500" 
-          required 
-        />
-        <button className="w-full py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-all shadow-lg active:scale-95">
+        <div>
+          <label className="text-white text-xs mb-1 block opacity-70">Full Name</label>
+          <input 
+            type="text" 
+            placeholder="Full Name" 
+            value={name} 
+            onChange={(e) => setName(e.target.value)} 
+            className="w-full p-3 rounded-lg bg-gray-900 text-white outline-none border border-white/10 focus:border-indigo-500" 
+            required 
+          />
+        </div>
+        <div>
+          <label className="text-white text-xs mb-1 block opacity-70">Contact Number</label>
+          <input 
+            type="text" 
+            placeholder="Contact Number" 
+            value={contact} 
+            onChange={(e) => setContact(e.target.value)} 
+            className="w-full p-3 rounded-lg bg-gray-900 text-white outline-none border border-white/10 focus:border-indigo-500" 
+            required 
+          />
+        </div>
+        <div>
+          <label className="text-white text-xs mb-1 block opacity-70">Date of Birth</label>
+          <input 
+            type="date" 
+            value={dob} 
+            onChange={(e) => setDob(e.target.value)} 
+            className="w-full p-3 rounded-lg bg-gray-900 text-white outline-none border border-white/10 focus:border-indigo-500" 
+            required 
+          />
+        </div>
+        <button className="w-full py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-all shadow-lg active:scale-95 mt-4">
           Register
         </button>
       </form>
