@@ -3,7 +3,6 @@ import { useState, ChangeEvent, FormEvent } from "react"
 import { BookOpen, Upload, PenTool, Calendar, Send, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
-// Define the structure of your semester mapping
 type CourseType = "B.Sc-I" | "B.Sc-II" | "B.Sc-III" | "M.Sc-I" | "M.Sc-II";
 
 export default function AssignmentManagement() {
@@ -19,7 +18,6 @@ export default function AssignmentManagement() {
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
 
-  // RENDER BACKEND URL
   const API_BASE_URL = "https://college-management-system-ae1l.onrender.com";
 
   const semesterMap: Record<CourseType, string[]> = {
@@ -44,22 +42,30 @@ export default function AssignmentManagement() {
     data.append("course", course)
     data.append("semester", formData.semester)
     data.append("type", type)
-    data.append("teacherName", formData.teacherName.toLowerCase())
+    data.append("teacherName", formData.teacherName)
     data.append("deadline", formData.deadline)
+    // Student notification trigger ke liye flag
+    data.append("isLatest", "true") 
     
     if (type === "text") data.append("content", formData.content)
     if (type === "file" && file) data.append("file", file)
 
     try {
-      // Updated to use Render Backend URL
       const res = await fetch(`${API_BASE_URL}/api/assignments/add`, {
         method: "POST",
         body: data
       })
       const resData = await res.json()
       if (resData.success) {
-        alert("Success: Assignment published successfully!");
-        setFormData({ fileName: "", semester: semesterMap[course][0], content: "", teacherName: "", deadline: "" })
+        alert("Success: Assignment published and notification sent!");
+        // Reset form after success
+        setFormData({ 
+            fileName: "", 
+            semester: semesterMap[course][0], 
+            content: "", 
+            teacherName: "", 
+            deadline: "" 
+        })
         setFile(null)
       }
     } catch (err) { 
@@ -73,19 +79,19 @@ export default function AssignmentManagement() {
     <div className="min-h-screen bg-[#0a0c14] text-white p-6 md:p-10 font-sans">
       <div className="max-w-4xl mx-auto">
         
-        {/* Navigation - FIXED PATH TO /admin-dashboard */}
+        {/* Navigation */}
         <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
                 <Link href="/admin-dashboard" className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all border border-white/5">
                     <ArrowLeft size={20} className="text-gray-400" />
                 </Link>
-                <h1 className="text-2xl font-black flex items-center gap-3 tracking-tight">
+                <h1 className="text-2xl font-black flex items-center gap-3 tracking-tight italic uppercase">
                     <BookOpen className="text-sky-400" /> ASSIGNMENT PANEL
                 </h1>
             </div>
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-[40px] p-8 shadow-2xl relative overflow-hidden">
+        <div className="bg-white/5 border border-white/10 rounded-[40px] p-8 shadow-2xl relative overflow-hidden backdrop-blur-md">
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-sky-500/10 blur-[100px] rounded-full"></div>
 
           {/* Mode Switcher */}
@@ -93,14 +99,14 @@ export default function AssignmentManagement() {
             <button 
               type="button"
               onClick={() => setType("text")} 
-              className={`px-8 py-3 rounded-xl text-[10px] font-black tracking-widest uppercase flex items-center gap-2 transition-all ${type === "text" ? "bg-sky-600 shadow-lg shadow-sky-600/30" : "text-gray-500 hover:text-white"}`}
+              className={`px-8 py-3 rounded-xl text-[10px] font-black tracking-widest uppercase flex items-center gap-2 transition-all ${type === "text" ? "bg-sky-600 shadow-lg shadow-sky-600/30 text-white" : "text-gray-500 hover:text-white"}`}
             >
               <PenTool size={14}/> Write Mode
             </button>
             <button 
               type="button"
               onClick={() => setType("file")} 
-              className={`px-8 py-3 rounded-xl text-[10px] font-black tracking-widest uppercase flex items-center gap-2 transition-all ${type === "file" ? "bg-sky-600 shadow-lg shadow-sky-600/30" : "text-gray-500 hover:text-white"}`}
+              className={`px-8 py-3 rounded-xl text-[10px] font-black tracking-widest uppercase flex items-center gap-2 transition-all ${type === "file" ? "bg-sky-600 shadow-lg shadow-sky-600/30 text-white" : "text-gray-500 hover:text-white"}`}
             >
               <Upload size={14}/> File Upload
             </button>
@@ -109,31 +115,31 @@ export default function AssignmentManagement() {
           <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-2 gap-8">
             
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Assignment Name *</label>
-              <input required value={formData.fileName} onChange={(e)=>setFormData({...formData, fileName: e.target.value})} className="w-full bg-white/5 border border-white/5 p-5 rounded-[25px] outline-none focus:border-sky-500/50 transition-all font-bold" placeholder="e.g. Quantum Physics Quiz" />
+              <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Assignment Name *</label>
+              <input required value={formData.fileName} onChange={(e)=>setFormData({...formData, fileName: e.target.value})} className="w-full bg-white/5 border border-white/5 p-5 rounded-[25px] outline-none focus:border-sky-500/50 transition-all font-bold placeholder:text-gray-700" placeholder="e.g. Quantum Physics Quiz" />
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Teacher Name *</label>
-              <input required value={formData.teacherName} onChange={(e)=>setFormData({...formData, teacherName: e.target.value})} className="w-full bg-white/5 border border-white/5 p-5 rounded-[25px] outline-none focus:border-sky-500/50 text-sm italic font-medium" placeholder="e.g. Prof. Maaz" />
+              <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Teacher Name *</label>
+              <input required value={formData.teacherName} onChange={(e)=>setFormData({...formData, teacherName: e.target.value})} className="w-full bg-white/5 border border-white/5 p-5 rounded-[25px] outline-none focus:border-sky-500/50 text-sm italic font-medium placeholder:text-gray-700" placeholder="e.g. Prof. Maaz" />
             </div>
 
             <div className="space-y-2 relative">
-              <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Target Course</label>
+              <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Target Course</label>
               <select value={course} onChange={handleCourseChange} className="w-full bg-white/5 border border-white/5 p-5 rounded-[25px] outline-none appearance-none font-bold cursor-pointer focus:border-sky-500/50 transition-all">
-                {Object.keys(semesterMap).map(c => <option key={c} value={c} className="bg-[#11141d]">{c}</option>)}
+                {Object.keys(semesterMap).map(c => <option key={c} value={c} className="bg-[#0a0c14]">{c}</option>)}
               </select>
             </div>
 
             <div className="space-y-2 relative">
-              <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Specific Semester</label>
+              <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Specific Semester</label>
               <select value={formData.semester} onChange={(e)=>setFormData({...formData, semester: e.target.value})} className="w-full bg-white/5 border border-white/5 p-5 rounded-[25px] outline-none appearance-none font-bold cursor-pointer focus:border-sky-500/50 transition-all">
-                {semesterMap[course].map(s => <option key={s} value={s} className="bg-[#11141d]">{s}</option>)}
+                {semesterMap[course].map(s => <option key={s} value={s} className="bg-[#0a0c14]">{s}</option>)}
               </select>
             </div>
 
             <div className="md:col-span-2 space-y-2">
-              <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Submission Deadline *</label>
+              <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Submission Deadline *</label>
               <div className="relative">
                 <Calendar className="absolute left-6 top-1/2 -translate-y-1/2 text-sky-400" size={18} />
                 <input required type="date" value={formData.deadline} onChange={(e)=>setFormData({...formData, deadline: e.target.value})} className="w-full bg-white/5 border border-white/5 p-5 pl-14 rounded-[25px] outline-none focus:border-sky-500/50 transition-all font-bold cursor-pointer" />
@@ -143,12 +149,12 @@ export default function AssignmentManagement() {
             <div className="md:col-span-2 mt-4">
               {type === "text" ? (
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Assignment Questions</label>
-                  <textarea required={type === "text"} value={formData.content} onChange={(e)=>setFormData({...formData, content: e.target.value})} className="w-full bg-white/5 border border-white/5 p-6 rounded-[30px] min-h-[250px] outline-none focus:border-sky-500/50 transition-all font-medium leading-relaxed" placeholder="Write your questions here..." />
+                  <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Assignment Questions</label>
+                  <textarea required={type === "text"} value={formData.content} onChange={(e)=>setFormData({...formData, content: e.target.value})} className="w-full bg-white/5 border border-white/5 p-6 rounded-[30px] min-h-[250px] outline-none focus:border-sky-500/50 transition-all font-medium leading-relaxed placeholder:text-gray-700" placeholder="Write your questions here..." />
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Attachment (PDF/DOC)</label>
+                  <label className="text-[10px] font-black text-gray-500 uppercase ml-2 tracking-widest">Attachment (PDF/DOC)</label>
                   <label className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 p-12 rounded-[40px] cursor-pointer hover:bg-white/5 hover:border-sky-500/30 transition-all group">
                     <div className="w-16 h-16 bg-sky-500/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <Upload className="text-sky-400" />
