@@ -10,7 +10,7 @@ interface RepoItem {
   _id: string;
   name: string;
   path: string;
-  isAssignment?: boolean; // New flag for batch-wise identification
+  isAssignment?: boolean; 
 }
 
 interface PathStep {
@@ -29,29 +29,29 @@ export default function StudentDashboard() {
   const [latestAssignment, setLatestAssignment] = useState<any>(null);
   const [showAlert, setShowAlert] = useState(false);
 
-  // Updated Fetch logic to get batch-wise assignments inside folders
   const fetchData = async () => {
     try {
-      // 1. Fetch normal folders
+      // 1. Fetch Folders
       const resF = await fetch(`${API_BASE_URL}/api/folders/${currentFolder}`)
       const dataF = await resF.json()
       if (dataF.success) setFolders(dataF.folders)
 
-      // 2. Fetch normal files
+      // 2. Fetch Regular Files
       const resFiles = await fetch(`${API_BASE_URL}/api/files/${currentFolder}`)
       const dataFiles = await resFiles.json()
       let combinedFiles: RepoItem[] = []
       if (dataFiles.success) combinedFiles = [...dataFiles.files]
 
-      // 3. 🚀 Fetch assignments specific to this folder/batch
+      // 3. Fetch Assignments for this specific folder ID
       if (currentFolder !== "root") {
         const resAsgn = await fetch(`${API_BASE_URL}/api/assignments/folder/${currentFolder}`)
         const dataAsgn = await resAsgn.json()
-        if (dataAsgn.success) {
+        
+        if (dataAsgn.success && dataAsgn.assignments) {
           const assignmentItems = dataAsgn.assignments.map((asgn: any) => ({
             _id: asgn._id,
             name: asgn.fileName,
-            path: asgn.fileUrl || "",
+            path: asgn.fileUrl || asgn.filePath || "", // Checking both naming conventions
             isAssignment: true
           }))
           combinedFiles = [...combinedFiles, ...assignmentItems]
@@ -79,10 +79,13 @@ export default function StudentDashboard() {
   useEffect(() => {
     fetchData()
     fetchLatestAlert()
+  }, [currentFolder])
+
+  useEffect(() => {
     const closeMenu = () => setActiveMenu(null)
     window.addEventListener("click", closeMenu)
     return () => window.removeEventListener("click", closeMenu)
-  }, [currentFolder])
+  }, [])
 
   const enterFolder = (folder: RepoItem) => {
     setPath([...path, { id: folder._id, name: folder.name }])
@@ -108,7 +111,7 @@ export default function StudentDashboard() {
   return (
     <div className="min-h-screen bg-[#030712] text-white p-6 md:p-10 font-sans">
       
-      {/* ⚡ LATEST ASSIGNMENT ALERT */}
+      {/* ⚡ NOTIFICATION ALERT */}
       <AnimatePresence>
         {showAlert && latestAssignment && (
           <motion.div initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className="max-w-7xl mx-auto mb-10 relative">
@@ -158,7 +161,7 @@ export default function StudentDashboard() {
         ))}
       </div>
 
-      {/* REPOSITORY GRID (Folders & Batch-wise Assignments) */}
+      {/* REPOSITORY GRID */}
       <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-8 gap-y-12">
         {/* FOLDERS */}
         {folders.map((f) => (
