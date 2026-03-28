@@ -7,10 +7,9 @@ const Assignment = require('../models/Assignment');
 // 1. Multer Storage Setup
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/'); // Ye folder 'backend/' ke andar hona chahiye
+        cb(null, 'uploads/'); 
     },
     filename: (req, file, cb) => {
-        // Unique filename banane ke liye: assignment-12345.pdf
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
     }
@@ -18,13 +17,14 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB Limit
+    limits: { fileSize: 10 * 1024 * 1024 } 
 });
 
-// 2. POST: Add New Assignment (File ya Text dono ke liye)
+// 2. POST: Add New Assignment (Ab folderId ke saath)
 router.post('/add', upload.single('file'), async (req, res) => {
     try {
-        const { fileName, teacherName, course, semester, type, content, deadline } = req.body;
+        // Body se folderId bhi nikaal rahe hain
+        const { fileName, teacherName, course, semester, type, content, deadline, folderId } = req.body;
 
         const newAssignment = new Assignment({
             fileName,
@@ -33,8 +33,9 @@ router.post('/add', upload.single('file'), async (req, res) => {
             semester,
             type,
             deadline,
+            folderId, // 🚀 Batch connect karne ke liye
             content: type === 'text' ? content : undefined,
-            filePath: type === 'file' ? req.file.filename : undefined,
+            fileUrl: type === 'file' ? req.file.filename : undefined,
             isLatest: true
         });
 
@@ -45,7 +46,19 @@ router.post('/add', upload.single('file'), async (req, res) => {
     }
 });
 
-// 3. GET: Latest Assignment for Student Dashboard Alert
+// 3. 🚀 NEW: Specific Folder ke Assignments fetch karne ke liye
+// Isse Student Dashboard batch-wise data dikhayega
+router.get('/folder/:folderId', async (req, res) => {
+    try {
+        const assignments = await Assignment.find({ folderId: req.params.folderId })
+                                           .sort({ uploadedAt: -1 });
+        res.json({ success: true, assignments });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 4. GET: Latest Assignment for Student Dashboard Alert
 router.get('/latest', async (req, res) => {
     try {
         const latest = await Assignment.findOne().sort({ createdAt: -1 });
