@@ -73,7 +73,7 @@ export default function Home() {
               <h3 className="text-2xl font-black uppercase tracking-tight mb-2 italic">Admin Portal</h3>
               <p className="text-[10px] text-gray-500 font-bold uppercase mb-8 tracking-widest">Dev Mode: Direct Dashboard Access</p>
               
-              <Link href="/admin" className="w-full">
+              <Link href="/admin-dashboard" className="w-full">
                 <button className="w-full bg-white text-black font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-sky-400 transition-all uppercase text-xs tracking-widest active:scale-95 shadow-xl">
                   Admin Entrance <ChevronRight size={16} />
                 </button>
@@ -96,7 +96,7 @@ export default function Home() {
               <h3 className="text-2xl font-black uppercase tracking-tight mb-2 italic">Student Hub</h3>
               <p className="text-[10px] text-gray-500 font-bold uppercase mb-8 tracking-widest">Dev Mode: Direct Entry</p>
               
-              <Link href="/student" className="w-full">
+              <Link href="/student-dashboard" className="w-full">
                 <button className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-500 transition-all uppercase text-xs tracking-widest active:scale-95 shadow-xl shadow-indigo-500/20">
                   Student Entrance <ChevronRight size={16} />
                 </button>
