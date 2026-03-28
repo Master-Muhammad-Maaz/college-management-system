@@ -1,7 +1,7 @@
 "use client"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { ShieldCheck, GraduationCap, ChevronRight, Globe, Award } from "lucide-react"
+import { ShieldCheck, GraduationCap, ChevronRight, Award } from "lucide-react"
 
 export default function Home() {
   return (
@@ -34,7 +34,7 @@ export default function Home() {
             </span>
           </motion.div>
 
-          <h1 className="text-4xl md:text-7xl font-black tracking-tighter leading-tight italic uppercase">
+          <h1 className="text-4xl md:text-7xl font-black tracking-tighter leading-tight italic uppercase text-white">
             Computer Science <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-400 to-purple-500 drop-shadow-sm">
               Department
@@ -49,18 +49,18 @@ export default function Home() {
              <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-sky-500"></div>
           </div>
 
-          <p className="mt-8 text-sm md:text-base text-gray-400 max-w-2xl mx-auto font-medium leading-relaxed uppercase tracking-wider">
+          <p className="mt-8 text-sm md:text-base text-gray-400 max-w-2xl mx-auto font-medium leading-relaxed uppercase tracking-wider italic">
             Shri Shivaji Education Society, Amravati <br/>
             <span className="text-white/60">Shri Shivaji College of Arts, Commerce & Science, Akola</span>
           </p>
         </motion.div>
 
-        {/* ULTRA LOGIN SECTION */}
+        {/* ULTRA LOGIN SECTION (BYPASSED) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-20 w-full max-w-4xl">
           
-          {/* ADMIN PORTAL CARD */}
+          {/* ADMIN PORTAL CARD - DIRECT ACCESS */}
           <motion.div
-            whileHover={{ y: -10 }}
+            whileHover={{ y: -10, boxShadow: "0 25px 50px -12px rgba(56, 189, 248, 0.2)" }}
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
@@ -71,23 +71,19 @@ export default function Home() {
                 <ShieldCheck size={32} className="text-sky-400" />
               </div>
               <h3 className="text-2xl font-black uppercase tracking-tight mb-2 italic">Admin Portal</h3>
-              <p className="text-[10px] text-gray-500 font-bold uppercase mb-8 tracking-widest">Faculty & Staff Access Only</p>
+              <p className="text-[10px] text-gray-500 font-bold uppercase mb-8 tracking-widest">Dev Mode: Direct Dashboard Access</p>
               
-              <Link href="/admin-login" className="w-full">
-                <button className="w-full bg-white text-black font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-sky-400 transition-all uppercase text-xs tracking-widest active:scale-95 shadow-xl shadow-sky-500/10">
-                  Secure Login <ChevronRight size={16} />
+              <Link href="/admin" className="w-full">
+                <button className="w-full bg-white text-black font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-sky-400 transition-all uppercase text-xs tracking-widest active:scale-95 shadow-xl">
+                  Admin Entrance <ChevronRight size={16} />
                 </button>
-              </Link>
-              
-              <Link href="/register" className="mt-6 text-[10px] font-black text-gray-600 hover:text-sky-400 uppercase tracking-widest transition-colors">
-                Request Administrative Access
               </Link>
             </div>
           </motion.div>
 
-          {/* STUDENT PORTAL CARD */}
+          {/* STUDENT PORTAL CARD - DIRECT ACCESS */}
           <motion.div
-            whileHover={{ y: -10 }}
+            whileHover={{ y: -10, boxShadow: "0 25px 50px -12px rgba(99, 102, 241, 0.2)" }}
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
@@ -98,22 +94,18 @@ export default function Home() {
                 <GraduationCap size={32} className="text-indigo-400" />
               </div>
               <h3 className="text-2xl font-black uppercase tracking-tight mb-2 italic">Student Hub</h3>
-              <p className="text-[10px] text-gray-500 font-bold uppercase mb-8 tracking-widest">Learning & Repository Access</p>
+              <p className="text-[10px] text-gray-500 font-bold uppercase mb-8 tracking-widest">Dev Mode: Direct Entry</p>
               
-              <Link href="/student-login" className="w-full">
+              <Link href="/student" className="w-full">
                 <button className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-500 transition-all uppercase text-xs tracking-widest active:scale-95 shadow-xl shadow-indigo-500/20">
-                  Student Login <ChevronRight size={16} />
+                  Student Entrance <ChevronRight size={16} />
                 </button>
-              </Link>
-
-              <Link href="/register" className="mt-6 text-[10px] font-black text-gray-600 hover:text-indigo-400 uppercase tracking-widest transition-colors">
-                New Enrollment? Register
               </Link>
             </div>
           </motion.div>
         </div>
 
-        {/* FACULTY SHOWCASE */}
+        {/* FACULTY SECTION */}
         <motion.div 
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -131,7 +123,7 @@ export default function Home() {
               { name: "Dr. S. M. Chavan", role: "Professor" },
               { name: "Ms. M. R. Gudade", role: "Professor" }
             ].map((fac, i) => (
-              <div key={i} className="p-6 rounded-3xl bg-white/2 border border-white/5 hover:bg-white/5 transition-colors group">
+              <div key={i} className="p-6 rounded-3xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors group">
                 <p className="text-xs font-black uppercase mb-1 group-hover:text-sky-400 transition-colors">{fac.name}</p>
                 <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">{fac.role}</p>
               </div>
