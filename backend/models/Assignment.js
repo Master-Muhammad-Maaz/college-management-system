@@ -9,8 +9,17 @@ const AssignmentSchema = new mongoose.Schema({
   fileUrl: { type: String },  
   teacherName: { type: String, required: true },
   uploadedAt: { type: Date, default: Date.now },
-  // FIX: Changed String to Date for better time-based queries
-  deadline: { type: Date } 
+  deadline: { type: Date },
+  
+  // 🚀 Naya Field: Batch-wise sorting ke liye
+  // Ye field connect karegi assignment ko uske sahi folder se (e.g. B.Sc folder)
+  folderId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "Folder", 
+    required: true 
+  }
+}, { 
+  timestamps: true // Isse 'createdAt' mil jayega dashboard notifications ke liye
 });
 
 module.exports = mongoose.model("Assignment", AssignmentSchema);
