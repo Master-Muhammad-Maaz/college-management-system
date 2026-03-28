@@ -8,12 +8,11 @@ const fs = require("fs");
 const authRoutes = require("./routes/authRoutes");
 const studentRoutes = require("./routes/studentRoutes"); 
 const attendanceRoutes = require("./routes/attendanceRoutes");
-const assignmentRoutes = require("./routes/assignmentRoutes");
+const assignmentRoutes = require("./routes/assignments"); // Ensure name matches your file
 
 const app = express();
 
 // 1. IMPROVED CORS CONFIGURATION
-// Isme humne flexible matching rakhi hai taaki Vercel ke subdomains block na hon
 const allowedOrigins = [
   "http://localhost:3000", 
   "http://localhost:3001", 
@@ -24,8 +23,6 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl) 
-    // or if the origin starts with your vercel project name
     if (!origin || allowedOrigins.includes(origin) || origin.includes("vercel.app")) {
       callback(null, true);
     } else {
@@ -42,6 +39,7 @@ app.use(express.json());
 
 /**
  * STATIC FOLDERS CONFIGURATION
+ * Isse students uploaded assignments view/download kar sakenge
  */
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -114,11 +112,11 @@ app.get("/", (req, res) => {
 });
 
 // 5. API Routes
-// Note: authRoutes handles /login, /register, /folders, /files, /upload etc.
 app.use("/api", authRoutes);
 app.use("/api/students", studentRoutes); 
 app.use("/api/attendance", attendanceRoutes);
-app.use("/api/assignments", assignmentRoutes);
+// Is path se Student Dashboard latest alert fetch karega
+app.use("/api/assignments", assignmentRoutes); 
 
 // 6. Global Error Handler
 app.use((err, req, res, next) => {
