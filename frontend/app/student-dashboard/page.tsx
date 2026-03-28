@@ -1,7 +1,10 @@
 "use client"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { FolderOpen, FileText, File as FileIcon, ChevronRight, Home, Download, MoreVertical, Eye } from "lucide-react"
+import { 
+  Folder, FileText, File as FileIcon, ChevronRight, 
+  Home, Download, MoreVertical, Eye 
+} from "lucide-react"
 
 // 1. Types for data structure
 interface RepoItem {
@@ -16,7 +19,6 @@ interface PathStep {
 }
 
 export default function StudentDashboard() {
-  // FINAL FIX: Render Backend URL
   const API_BASE_URL = "https://college-management-system-ae1l.onrender.com";
 
   const [folders, setFolders] = useState<RepoItem[]>([])
@@ -27,7 +29,6 @@ export default function StudentDashboard() {
 
   const fetchData = async () => {
     try {
-      // Updated with API_BASE_URL
       const resF = await fetch(`${API_BASE_URL}/api/folders/${currentFolder}`)
       const dataF = await resF.json()
       if (dataF.success) setFolders(dataF.folders)
@@ -59,85 +60,87 @@ export default function StudentDashboard() {
   }
 
   const handleView = (file: RepoItem) => {
-    // Render URL fix for viewing files
     const cleanFileName = file.path.split(/[\\/]/).pop(); 
     window.open(`${API_BASE_URL}/uploads/${cleanFileName}`, "_blank");
   }
 
   const handleDownload = (file: RepoItem) => {
-    // Render URL fix for downloading files
     window.open(`${API_BASE_URL}/api/download/${file._id}`, "_blank");
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0c14] text-white p-6 md:p-10">
+    <div className="min-h-screen bg-[#030712] text-white p-6 md:p-10">
       
-      {/* HEADER */}
-      <div className="max-w-6xl mx-auto flex items-center justify-between mb-8 border-b border-white/5 pb-6">
+      {/* HEADER - Matches Premium Theme */}
+      <div className="max-w-7xl mx-auto flex items-center justify-between mb-8 border-b border-white/5 pb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3 tracking-tight text-sky-400">
+          <h1 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter flex items-center gap-3 text-blue-500">
             <FileText /> Student Repository
           </h1>
-          <p className="text-gray-500 text-sm mt-1">Access study materials and notes</p>
+          <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">Digital Library & Resources</p>
         </div>
-        <button onClick={() => navigateTo(0)} className="bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10 transition flex items-center gap-2 text-xs font-bold border border-white/10">
-          <Home size={16} /> Home
+        <button onClick={() => navigateTo(0)} className="bg-white/5 px-6 py-2 rounded-xl hover:bg-white/10 transition flex items-center gap-2 text-[10px] font-black uppercase tracking-widest border border-white/10 shadow-lg active:scale-95">
+          <Home size={14} className="text-blue-500" /> Home
         </button>
       </div>
 
-      {/* BREADCRUMBS */}
-      <div className="max-w-6xl mx-auto mb-10 flex items-center gap-2 bg-sky-500/5 p-4 rounded-xl border border-sky-500/10 overflow-x-auto whitespace-nowrap">
+      {/* BREADCRUMBS - Matches Admin Style */}
+      <div className="max-w-7xl mx-auto mb-12 flex items-center gap-2 bg-white/5 p-4 rounded-2xl border border-white/5 overflow-x-auto backdrop-blur-md">
         {path.map((step, index) => (
-          <div key={step.id} className="flex items-center gap-2">
+          <div key={step.id} className="flex items-center gap-2 whitespace-nowrap">
             <button 
               onClick={() => navigateTo(index)} 
-              className={`hover:text-sky-400 transition text-sm font-semibold ${index === path.length - 1 ? "text-sky-400" : "text-gray-500"}`}
+              className={`hover:text-blue-400 transition text-[11px] font-black uppercase tracking-widest flex items-center gap-2 ${index === path.length - 1 ? "text-blue-400" : "text-gray-500"}`}
             >
-              {step.name}
+              {step.name === "Root" ? <Home size={16} className="text-blue-500" /> : step.name}
             </button>
             {index < path.length - 1 && <ChevronRight size={14} className="text-gray-700" />}
           </div>
         ))}
       </div>
 
-      {/* CONTENT GRID */}
-      <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 md:gap-8">
+      {/* REPOSITORY GRID - Folders & Files */}
+      <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-8 gap-y-12">
         {folders.length === 0 && files.length === 0 && (
-          <div className="col-span-full text-center py-20 text-gray-600">
-             Folder is empty
+          <div className="col-span-full text-center py-20 text-gray-700 font-bold uppercase tracking-widest text-xs">
+              Repository is empty
           </div>
         )}
 
+        {/* FOLDERS */}
         {folders.map((f) => (
           <motion.div key={f._id} onDoubleClick={() => enterFolder(f)} className="flex flex-col items-center group cursor-pointer" whileHover={{ y: -5 }}>
-            <div className="bg-sky-900/10 p-6 rounded-2xl group-hover:bg-sky-800/20 border border-white/5 transition-all shadow-xl">
-              <FolderOpen size={45} className="text-sky-500" />
+            <div className="w-24 h-24 bg-blue-600/10 border border-blue-500/20 rounded-3xl flex items-center justify-center transition-all group-hover:bg-blue-600/20 group-hover:border-blue-500/40 shadow-xl shadow-blue-500/5">
+              <Folder size={44} className="text-blue-500" fill="currentColor" fillOpacity={0.15} />
             </div>
-            <span className="mt-3 text-sm font-medium text-gray-300 text-center truncate w-full px-2">{f.name}</span>
+            <span className="mt-4 text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] text-center w-full px-2 group-hover:text-blue-400 transition-colors">
+              {f.name}
+            </span>
           </motion.div>
         ))}
 
+        {/* FILES */}
         {files.map((file) => (
           <motion.div key={file._id} className="flex flex-col items-center group relative" whileHover={{ y: -5 }}>
-            
             <div 
               onClick={() => handleView(file)}
-              className="bg-emerald-900/10 p-6 rounded-2xl group-hover:bg-emerald-800/20 border border-white/5 transition-all shadow-xl text-emerald-500 cursor-pointer relative"
+              className="w-24 h-24 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center transition-all group-hover:bg-white/10 group-hover:border-white/20 shadow-lg relative cursor-pointer"
             >
-              <FileIcon size={45} />
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 rounded-2xl">
+              <FileIcon size={40} className="text-indigo-400" />
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600/20 rounded-3xl backdrop-blur-[2px]">
                 <Eye size={20} className="text-white" />
               </div>
             </div>
 
+            {/* OPTIONS MENU */}
             <button 
               onClick={(e) => {
                 e.stopPropagation();
                 setActiveMenu(activeMenu === file._id ? null : file._id);
               }}
-              className="absolute top-1 right-2 p-1 text-gray-500 hover:text-white transition-colors"
+              className="absolute top-1 right-1 p-1.5 text-gray-600 hover:text-white transition-colors bg-black/40 rounded-full md:opacity-0 group-hover:opacity-100"
             >
-              <MoreVertical size={18} />
+              <MoreVertical size={14} />
             </button>
 
             <AnimatePresence>
@@ -146,19 +149,21 @@ export default function StudentDashboard() {
                   initial={{ opacity: 0, scale: 0.9, y: -10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="absolute top-12 right-0 z-50 bg-[#161b22] border border-white/10 shadow-2xl rounded-lg py-1 w-32 overflow-hidden"
+                  className="absolute top-14 right-0 z-50 bg-[#0a0c14] border border-white/10 shadow-2xl rounded-2xl py-2 w-36 backdrop-blur-xl"
                 >
                   <button 
                     onClick={() => handleDownload(file)}
-                    className="w-full flex items-center px-4 py-2 hover:bg-sky-600 transition text-xs font-bold text-white"
+                    className="w-full flex items-center px-4 py-3 hover:bg-blue-600 transition text-[10px] font-black uppercase tracking-widest text-white"
                   >
-                    <Download size={14} className="mr-2" /> Download
+                    <Download size={14} className="mr-3 text-blue-400" /> Download
                   </button>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <span className="mt-3 text-xs text-center text-gray-400 break-all w-24 line-clamp-2 px-1">{file.name}</span>
+            <span className="mt-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-center break-all line-clamp-2 w-full px-2 group-hover:text-white transition-colors">
+              {file.name}
+            </span>
           </motion.div>
         ))}
       </div>
