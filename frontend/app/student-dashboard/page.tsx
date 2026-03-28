@@ -31,18 +31,18 @@ export default function StudentDashboard() {
 
   const fetchData = async () => {
     try {
-      // 1. Fetch Folders
+      // 1. Fetch normal folders
       const resF = await fetch(`${API_BASE_URL}/api/folders/${currentFolder}`)
       const dataF = await resF.json()
       if (dataF.success) setFolders(dataF.folders)
 
-      // 2. Fetch Regular Files
+      // 2. Fetch normal files
       const resFiles = await fetch(`${API_BASE_URL}/api/files/${currentFolder}`)
       const dataFiles = await resFiles.json()
       let combinedFiles: RepoItem[] = []
       if (dataFiles.success) combinedFiles = [...dataFiles.files]
 
-      // 3. Fetch Assignments for this specific folder ID
+      // 3. 🚀 Fetch assignments specific to THIS BATCH/FOLDER
       if (currentFolder !== "root") {
         const resAsgn = await fetch(`${API_BASE_URL}/api/assignments/folder/${currentFolder}`)
         const dataAsgn = await resAsgn.json()
@@ -51,8 +51,8 @@ export default function StudentDashboard() {
           const assignmentItems = dataAsgn.assignments.map((asgn: any) => ({
             _id: asgn._id,
             name: asgn.fileName,
-            path: asgn.fileUrl || asgn.filePath || "", // Checking both naming conventions
-            isAssignment: true
+            path: asgn.fileUrl || asgn.filePath || "",
+            isAssignment: true // Separate identification for different icon
           }))
           combinedFiles = [...combinedFiles, ...assignmentItems]
         }
@@ -69,7 +69,7 @@ export default function StudentDashboard() {
       const data = await res.json();
       if (data.success && data.assignment) {
         setLatestAssignment(data.assignment);
-        setShowAlert(true);
+        setShowAlert(true); // Alert box automatically appears
       }
     } catch (err) {
       console.error("Alert fetch error:", err);
@@ -111,7 +111,7 @@ export default function StudentDashboard() {
   return (
     <div className="min-h-screen bg-[#030712] text-white p-6 md:p-10 font-sans">
       
-      {/* ⚡ NOTIFICATION ALERT */}
+      {/* ⚡ NEW ASSIGNMENT ALERT BOX */}
       <AnimatePresence>
         {showAlert && latestAssignment && (
           <motion.div initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className="max-w-7xl mx-auto mb-10 relative">
@@ -149,21 +149,9 @@ export default function StudentDashboard() {
         </button>
       </div>
 
-      {/* BREADCRUMBS */}
-      <div className="max-w-7xl mx-auto mb-12 flex items-center gap-2 bg-white/5 p-4 rounded-2xl border border-white/5 overflow-x-auto backdrop-blur-md">
-        {path.map((step, index) => (
-          <div key={step.id} className="flex items-center gap-2 whitespace-nowrap">
-            <button onClick={() => navigateTo(index)} className={`hover:text-blue-400 transition text-[11px] font-black uppercase tracking-widest flex items-center gap-2 ${index === path.length - 1 ? "text-blue-400" : "text-gray-500"}`}>
-              {step.name === "Root" ? <Home size={16} className="text-blue-500" /> : step.name}
-            </button>
-            {index < path.length - 1 && <ChevronRight size={14} className="text-gray-700" />}
-          </div>
-        ))}
-      </div>
-
       {/* REPOSITORY GRID */}
       <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-8 gap-y-12">
-        {/* FOLDERS */}
+        {/* FOLDERS (M.SC II, B.SC, MCA) */}
         {folders.map((f) => (
           <motion.div key={f._id} onDoubleClick={() => enterFolder(f)} className="flex flex-col items-center group cursor-pointer" whileHover={{ y: -5 }}>
             <div className="w-24 h-24 bg-blue-600/10 border border-blue-500/20 rounded-3xl flex items-center justify-center transition-all group-hover:bg-blue-600/20 group-hover:border-blue-500/40 shadow-xl shadow-blue-500/5">
@@ -173,7 +161,7 @@ export default function StudentDashboard() {
           </motion.div>
         ))}
 
-        {/* FILES & ASSIGNMENTS */}
+        {/* BATCH-WISE ASSIGNMENTS (Different Icon/Color) */}
         {files.map((file) => (
           <motion.div key={file._id} className="flex flex-col items-center group relative" whileHover={{ y: -5 }}>
             <div onClick={() => handleView(file)} className={`w-24 h-24 border rounded-3xl flex items-center justify-center transition-all shadow-lg relative cursor-pointer ${file.isAssignment ? "bg-indigo-600/10 border-indigo-500/30 group-hover:bg-indigo-600/20" : "bg-white/5 border-white/10 group-hover:bg-white/10"}`}>
@@ -182,20 +170,6 @@ export default function StudentDashboard() {
                 <Eye size={20} className="text-white" />
               </div>
             </div>
-
-            <button onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === file._id ? null : file._id); }} className="absolute top-1 right-1 p-1.5 text-gray-600 hover:text-white transition-colors bg-black/40 rounded-full md:opacity-0 group-hover:opacity-100">
-              <MoreVertical size={14} />
-            </button>
-
-            <AnimatePresence>
-              {activeMenu === file._id && (
-                <motion.div initial={{ opacity: 0, scale: 0.9, y: -10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="absolute top-14 right-0 z-50 bg-[#0a0c14] border border-white/10 shadow-2xl rounded-2xl py-2 w-36 backdrop-blur-xl">
-                  <button onClick={() => handleDownload(file)} className="w-full flex items-center px-4 py-3 hover:bg-blue-600 transition text-[10px] font-black uppercase tracking-widest text-white">
-                    <Download size={14} className="mr-3 text-blue-400" /> Download
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
             <span className={`mt-4 text-[10px] font-bold uppercase tracking-widest text-center break-all line-clamp-2 w-full px-2 transition-colors ${file.isAssignment ? "text-indigo-400 group-hover:text-indigo-200" : "text-gray-500 group-hover:text-white"}`}>
               {file.name}
