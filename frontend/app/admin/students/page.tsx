@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
+// FIX: Removed 'PalmTree' as it caused the export error in image_41fbfd.png
 import { 
   Users, UserPlus, Loader2, FileDown, 
   CalendarDays, BookOpen, CheckCircle2, XCircle, Calendar, Trees 
@@ -21,7 +22,6 @@ export default function AdminManagement() {
   const courses = ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II"]
   const API_BASE = "https://college-management-system-ae1l.onrender.com";
 
-  // --- PREVIOUS LOGIC: FETCH BY COURSE ---
   const fetchStudents = async () => {
     setLoading(true);
     try {
@@ -29,7 +29,6 @@ export default function AdminManagement() {
       const data = await res.json()
       if (data.success) {
         setStudents(data.students);
-        // Clear old attendance when switching classes to prevent mix-up
         setAttendance({}); 
       }
     } catch (err) { 
@@ -41,22 +40,19 @@ export default function AdminManagement() {
 
   useEffect(() => { fetchStudents(); }, [selectedCourse])
 
-  // --- DATABASE FIX: SYNC LOGIC ---
   const handleSyncAttendance = async () => {
     const recordCount = Object.keys(attendance).length;
     if (recordCount === 0) return alert("Please mark attendance or holiday first!");
     
     setLoading(true);
     try {
-      // PREVIOUS LOGIC IMPLEMENTATION: 
-      // Ensuring the payload matches your Backend Controller exactly
       const response = await fetch(`${API_BASE}/api/attendance/bulk-sync`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date: selectedDate,
           course: selectedCourse, 
-          records: attendance // StudentID: Status mapping
+          records: attendance 
         })
       });
 
@@ -67,11 +63,12 @@ export default function AdminManagement() {
           ? `Success: ${selectedCourse} Holiday records saved for ${selectedDate}.`
           : `Success: ${selectedCourse} Attendance (${recordCount} students) synced to database.`;
         alert(msg);
-        setAttendance({}); // Clear pending sync badge
+        setAttendance({}); 
       } else {
         alert("Database Error: " + (result.message || "Failed to save records."));
       }
     } catch (err) {
+      // Triggered when server is unreachable (image_427426.png)
       console.error("Sync Error:", err);
       alert("Error: Could not reach the server. Please check Render logs.");
     } finally {
@@ -79,6 +76,7 @@ export default function AdminManagement() {
     }
   }
 
+  // Restore previous export logic as requested
   const handleExportExcel = () => {
     window.open(`${API_BASE}/api/attendance/export?course=${selectedCourse}&date=${selectedDate}`, '_blank');
   }
@@ -155,7 +153,7 @@ export default function AdminManagement() {
           </button>
         </div>
 
-        {/* --- COURSE TABS (Previous Logic) --- */}
+        {/* Course Tabs */}
         <div className="flex gap-2 mb-8 overflow-x-auto no-scrollbar pb-2">
           {courses.map(c => (
             <button 
