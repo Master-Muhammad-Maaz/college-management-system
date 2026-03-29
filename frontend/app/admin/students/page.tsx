@@ -33,9 +33,10 @@ export default function AdminManagement() {
 
   useEffect(() => { fetchStudents(); }, [selectedCourse])
 
-  // --- SYNC LOGIC (DATABASE ME SAVE KARNE KE LIYE) ---
+  // --- SYNC LOGIC (DATABASE SAVE + ENGLISH POPUPS) ---
   const handleSyncAttendance = async () => {
-    if (Object.keys(attendance).length === 0) return alert("Pehle attendance mark karein!");
+    const recordCount = Object.keys(attendance).length;
+    if (recordCount === 0) return alert("Please mark attendance or holiday first!");
     
     setLoading(true);
     try {
@@ -49,20 +50,24 @@ export default function AdminManagement() {
         })
       });
       const data = await res.json();
+
       if (data.success) {
-        alert(`Records for ${selectedDate} saved to Database!`);
+        // English Pop-up Logic
+        if (isHolidayMode) {
+          alert(`Success: Holiday for all students on ${selectedDate} has been synced to the database.`);
+        } else {
+          alert(`Success: Attendance records for ${recordCount} students have been securely saved.`);
+        }
         setAttendance({});
       }
     } catch (err) {
-      alert("Database error! Connection check karein.");
+      alert("Error: Failed to sync with database. Please check your internet connection.");
     } finally {
       setLoading(false);
     }
   }
 
-  // --- EXPORT LOGIC ---
   const handleExportExcel = () => {
-    // Ye aapke backend route ko trigger karega jo excel file generate karta hai
     window.open(`${API_BASE}/api/attendance/export?course=${selectedCourse}&date=${selectedDate}`, '_blank');
   }
 
@@ -99,7 +104,7 @@ export default function AdminManagement() {
             <div>
               <h1 className="text-2xl font-black text-[#0f172a] uppercase tracking-tighter italic">ADMIN PANEL</h1>
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                {isHolidayMode ? "Holiday Logic Enabled" : isAttendanceMode ? "Swipe: Up (P) | Down (A)" : "Control Center"}
+                {isHolidayMode ? "Official Holiday Mode" : "System Control Center"}
               </p>
             </div>
           </div>
@@ -122,16 +127,14 @@ export default function AdminManagement() {
             <span className="text-[9px] font-black uppercase text-blue-600 group-hover:text-white">Add Student</span>
           </button>
           
-          <button onClick={handleSyncAttendance} className="flex flex-col items-center justify-center p-6 bg-emerald-50 border border-emerald-100 rounded-[30px] hover:bg-emerald-600 group transition-all">
-            <CheckCircle2 className="text-emerald-600 group-hover:text-white mb-2" size={24} />
+          <button onClick={handleSyncAttendance} disabled={loading} className="flex flex-col items-center justify-center p-6 bg-emerald-50 border border-emerald-100 rounded-[30px] hover:bg-emerald-600 group transition-all disabled:opacity-50">
+            {loading ? <Loader2 className="animate-spin text-emerald-600 mb-2" /> : <CheckCircle2 className="text-emerald-600 group-hover:text-white mb-2" size={24} />}
             <span className="text-[9px] font-black uppercase text-emerald-600 group-hover:text-white">Sync Records</span>
           </button>
 
-          <button onClick={toggleHoliday} className={`flex flex-col items-center justify-center p-6 rounded-[30px] border transition-all ${isHolidayMode ? "bg-orange-600 border-orange-700 shadow-lg shadow-orange-100" : "bg-orange-50 border-orange-100 hover:bg-orange-600 group"}`}>
+          <button onClick={toggleHoliday} className={`flex flex-col items-center justify-center p-6 rounded-[30px] border transition-all ${isHolidayMode ? "bg-orange-600 border-orange-700 shadow-lg" : "bg-orange-50 border-orange-100 hover:bg-orange-600 group"}`}>
             <CalendarDays className={`${isHolidayMode ? "text-white" : "text-orange-600 group-hover:text-white"} mb-2`} size={24} />
-            <span className={`text-[9px] font-black uppercase ${isHolidayMode ? "text-white" : "text-orange-600 group-hover:text-white"}`}>
-              {isHolidayMode ? "Exit Holiday" : "Holiday Mode"}
-            </span>
+            <span className={`text-[9px] font-black uppercase ${isHolidayMode ? "text-white" : "text-orange-600 group-hover:text-white"}`}>Holiday Mode</span>
           </button>
 
           <button onClick={handleExportExcel} className="flex flex-col items-center justify-center p-6 bg-slate-50 border border-slate-100 rounded-[30px] hover:bg-slate-900 group transition-all">
@@ -140,28 +143,15 @@ export default function AdminManagement() {
           </button>
         </div>
 
-        {/* Course Tabs */}
-        <div className="flex gap-2 mb-8 overflow-x-auto no-scrollbar">
-          {courses.map(c => (
-            <button key={c} onClick={() => setSelectedCourse(c)} className={`px-6 py-2 rounded-full text-[9px] font-black uppercase border transition-all ${selectedCourse === c ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-400 border-slate-100"}`}>{c}</button>
-          ))}
-        </div>
-
-        {/* Table Area */}
-        <div className={`bg-white rounded-[40px] border shadow-2xl overflow-hidden min-h-[400px] relative transition-all ${isHolidayMode ? "border-orange-200" : "border-slate-100"}`}>
-          {isHolidayMode && (
-            <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
-              <span className="text-[120px] font-black uppercase -rotate-12">Holiday</span>
-            </div>
-          )}
-          
+        {/* Tabs and Table */}
+        <div className="bg-white rounded-[40px] border shadow-2xl overflow-hidden min-h-[400px] relative border-slate-100">
           <div className="p-6 border-b flex justify-between items-center bg-slate-50/30">
              <div className="flex gap-2">
-                <button onClick={() => setIsAttendanceMode(false)} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${!isAttendanceMode ? "bg-white shadow-sm text-blue-600" : "text-slate-400"}`}>List</button>
+                <button onClick={() => setIsAttendanceMode(false)} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${!isAttendanceMode ? "bg-white shadow-sm text-blue-600" : "text-slate-400"}`}>List View</button>
                 <button onClick={() => setIsAttendanceMode(true)} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${isAttendanceMode ? "bg-white shadow-sm text-blue-600" : "text-slate-400"}`}>Attendance</button>
              </div>
              {Object.keys(attendance).length > 0 && (
-               <div className="bg-blue-50 px-3 py-1 rounded-full text-[8px] font-black text-blue-600 uppercase tracking-widest animate-bounce">
+               <div className="bg-blue-600 px-4 py-1.5 rounded-full text-[9px] font-black text-white uppercase tracking-widest animate-pulse shadow-lg shadow-blue-200">
                  {Object.keys(attendance).length} Pending Sync
                </div>
              )}
@@ -170,9 +160,9 @@ export default function AdminManagement() {
           <table className="w-full text-left relative z-10">
             <thead>
               <tr className="border-b border-slate-50">
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400">SR</th>
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400">Student Name</th>
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400 text-right">Status</th>
+                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">SR</th>
+                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">Student Name</th>
+                <th className="p-6 text-[10px] font-black uppercase text-slate-400 text-right tracking-widest">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -183,23 +173,23 @@ export default function AdminManagement() {
                   dragConstraints={{ top: 0, bottom: 0 }}
                   onDragEnd={(_, info) => handleDragEnd(info, s._id)}
                   className={`border-b border-slate-50 transition-colors ${
-                    attendance[s._id] === 'H' ? 'bg-orange-50/50' : 
-                    attendance[s._id] === 'P' ? 'bg-emerald-50/50' : 
-                    attendance[s._id] === 'A' ? 'bg-red-50/50' : 'hover:bg-slate-50/50'
+                    attendance[s._id] === 'H' ? 'bg-orange-50/40' : 
+                    attendance[s._id] === 'P' ? 'bg-emerald-50/40' : 
+                    attendance[s._id] === 'A' ? 'bg-red-50/40' : 'hover:bg-slate-50/50'
                   }`}
                 >
                   <td className="p-6 font-bold text-blue-600">#{s.srNo}</td>
-                  <td className="p-6 font-black text-slate-700 uppercase">{s.name}</td>
+                  <td className="p-6 font-black text-slate-700 uppercase tracking-tight">{s.name}</td>
                   <td className="p-6 text-right">
                     <div className="flex justify-end items-center gap-3">
                       {attendance[s._id] === 'H' ? (
-                        <span className="text-orange-600 text-[10px] font-black uppercase flex items-center gap-1"><Trees size={14}/> Holiday</span>
+                        <span className="text-orange-600 text-[10px] font-black uppercase flex items-center gap-1 bg-orange-100 px-3 py-1 rounded-full"><Trees size={12}/> Holiday</span>
                       ) : attendance[s._id] === 'P' ? (
-                        <span className="text-emerald-600 text-[10px] font-black uppercase flex items-center gap-1"><CheckCircle2 size={14}/> Present</span>
+                        <span className="text-emerald-600 text-[10px] font-black uppercase flex items-center gap-1 bg-emerald-100 px-3 py-1 rounded-full"><CheckCircle2 size={12}/> Present</span>
                       ) : attendance[s._id] === 'A' ? (
-                        <span className="text-red-500 text-[10px] font-black uppercase flex items-center gap-1"><XCircle size={14}/> Absent</span>
+                        <span className="text-red-500 text-[10px] font-black uppercase flex items-center gap-1 bg-red-100 px-3 py-1 rounded-full"><XCircle size={12}/> Absent</span>
                       ) : (
-                        <span className="px-3 py-1 bg-slate-100 text-slate-400 text-[8px] font-black rounded-full uppercase italic">No Status</span>
+                        <span className="text-slate-300 text-[9px] font-black uppercase italic">Pending...</span>
                       )}
                     </div>
                   </td>
@@ -207,7 +197,6 @@ export default function AdminManagement() {
               ))}
             </tbody>
           </table>
-          {loading && <div className="flex justify-center p-10"><Loader2 className="animate-spin text-blue-600" /></div>}
         </div>
       </div>
 
