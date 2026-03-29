@@ -1,15 +1,15 @@
 "use client"
 import React, { useState, ChangeEvent, FormEvent } from 'react';
-import { X, UserPlus, Upload, Trash2 } from 'lucide-react';
+import { X, UserPlus, Upload, Trash2, Loader2 } from 'lucide-react';
 
 interface AddStudentModalProps {
-  selectedCourse: string;
+  isOpen: boolean;       // Dashboard se match karne ke liye
   onClose: () => void;
-  refreshData: () => void;
+  fetchStudents: () => void; // Dashboard mein yahi naam hai
+  course: string;        // Dashboard mein 'course' naam se pass ho raha hai
 }
 
-const AddStudentModal: React.FC<AddStudentModalProps> = ({ selectedCourse, onClose, refreshData }) => {
-  // FIX: Added mobile and dob to state
+const AddStudentModal: React.FC<AddStudentModalProps> = ({ isOpen, onClose, fetchStudents, course }) => {
   const [formData, setFormData] = useState({ 
     srNo: "", 
     name: "", 
@@ -18,8 +18,9 @@ const AddStudentModal: React.FC<AddStudentModalProps> = ({ selectedCourse, onClo
   });
   const [loading, setLoading] = useState(false);
 
-  // Use your Render URL
   const API_BASE = "https://college-management-system-ae1l.onrender.com";
+
+  if (!isOpen) return null; // Modal close hone par kuch render nahi karega
 
   const handleManualSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -30,25 +31,20 @@ const AddStudentModal: React.FC<AddStudentModalProps> = ({ selectedCourse, onClo
     
     setLoading(true);
     try {
-      // FIX: Using the '/add' route we created in studentRoutes.js for cleaner logic
       const res = await fetch(`${API_BASE}/api/students/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          ...formData, 
-          course: selectedCourse 
-        })
+        body: JSON.stringify({ ...formData, course })
       });
       const data = await res.json();
       if(data.success) {
         setFormData({ srNo: "", name: "", mobile: "", dob: "" });
-        refreshData();
-        alert("Success: Student record saved.");
+        fetchStudents();
         onClose();
       } else {
         alert(`Error: ${data.message}`);
       }
-    } catch (err) { alert("Network Error: Failed to reach server."); }
+    } catch (err) { alert("Network Error!"); }
     setLoading(false);
   };
 
@@ -61,88 +57,73 @@ const AddStudentModal: React.FC<AddStudentModalProps> = ({ selectedCourse, onClo
     try {
       const res = await fetch(`${API_BASE}/api/students/import-excel`, { method: "POST", body: data });
       const result = await res.json();
+      if (result.success) fetchStudents(); 
       alert(result.message);
-      if (result.success) refreshData(); 
-    } catch (err) { alert("Error: Excel upload failed."); }
-    setLoading(false);
-  };
-
-  const handleClearBatch = async () => {
-    const pin = prompt(`CRITICAL ACTION: Enter PINCODE to wipe data for ${selectedCourse}:`);
-    if (!pin) return;
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/students/clear-batch`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ course: selectedCourse, pincode: pin })
-      });
-      const result = await res.json();
-      alert(result.message);
-      if (result.success) refreshData();
-    } catch (err) { alert("Error: Operation failed."); }
+    } catch (err) { alert("Excel upload failed."); }
     setLoading(false);
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-[#11141d] border border-white/10 w-full max-w-md rounded-[40px] p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[100] bg-slate-900/20 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white w-full max-w-lg rounded-[50px] p-12 relative shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto no-scrollbar">
         
-        <button onClick={onClose} className="absolute top-8 right-8 text-gray-500 hover:text-white transition-colors">
+        <button onClick={onClose} className="absolute top-10 right-10 text-slate-300 hover:text-slate-600 transition-colors">
           <X size={24}/>
         </button>
 
-        <h2 className="text-2xl font-black mb-1 flex items-center gap-3">
-          <UserPlus className="text-sky-400" /> ADD STUDENT
-        </h2>
-        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6">
-          Course: <span className="text-sky-400">{selectedCourse}</span>
-        </p>
+        <div className="mb-10">
+          <h2 className="text-3xl font-black text-[#0f172a] tracking-tighter flex items-center gap-3">
+            <UserPlus className="text-blue-600" size={32} /> ADD STUDENT
+          </h2>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">
+            Target Course: <span className="text-blue-600">{course}</span>
+          </p>
+        </div>
 
-        <form onSubmit={handleManualSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-600 uppercase ml-2">Roll No</label>
-              <input type="number" placeholder="101" value={formData.srNo} onChange={(e) => setFormData({...formData, srNo: e.target.value})} className="w-full bg-white/5 border border-white/5 rounded-2xl p-4 outline-none focus:border-sky-500 font-bold" required />
+        <form onSubmit={handleManualSubmit} className="space-y-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase ml-2 tracking-widest">Roll Number</label>
+              <input type="number" placeholder="101" value={formData.srNo} onChange={(e) => setFormData({...formData, srNo: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 outline-none focus:border-blue-600 font-bold transition-all" required />
             </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-600 uppercase ml-2">DOB</label>
-              <input type="date" value={formData.dob} onChange={(e) => setFormData({...formData, dob: e.target.value})} className="w-full bg-white/5 border border-white/5 rounded-2xl p-4 outline-none focus:border-sky-500 font-bold text-gray-400" required />
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase ml-2 tracking-widest">Birth Date</label>
+              <input type="date" value={formData.dob} onChange={(e) => setFormData({...formData, dob: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 outline-none focus:border-blue-600 font-bold text-slate-400 transition-all" required />
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-[10px] font-black text-gray-600 uppercase ml-2">Full Name</label>
-            <input type="text" placeholder="MOHAMMAD MAAZ" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-white/5 border border-white/5 rounded-2xl p-4 outline-none focus:border-sky-500 font-bold uppercase" required />
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase ml-2 tracking-widest">Student Full Name</label>
+            <input type="text" placeholder="ENTER NAME" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 outline-none focus:border-blue-600 font-bold uppercase transition-all" required />
           </div>
 
-          <div className="space-y-1">
-            <label className="text-[10px] font-black text-gray-600 uppercase ml-2">Mobile Number</label>
-            <input type="text" placeholder="98XXXXXXXX" value={formData.mobile} onChange={(e) => setFormData({...formData, mobile: e.target.value})} className="w-full bg-white/5 border border-white/5 rounded-2xl p-4 outline-none focus:border-sky-500 font-bold" required />
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase ml-2 tracking-widest">Contact Number</label>
+            <input type="text" placeholder="91XXXXXXXX" value={formData.mobile} onChange={(e) => setFormData({...formData, mobile: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 outline-none focus:border-blue-600 font-bold transition-all" required />
           </div>
 
-          <button type="submit" disabled={loading} className="w-full bg-sky-600 hover:bg-sky-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2">
-            {loading ? "Saving..." : "Save Record"}
+          <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 py-6 rounded-2xl font-black text-[11px] text-white uppercase tracking-widest transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-3">
+            {loading ? <Loader2 className="animate-spin" size={18}/> : "Save Student Record"}
           </button>
         </form>
 
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
-          <div className="relative flex justify-center text-[10px] font-black uppercase"><span className="bg-[#11141d] px-4 text-gray-600">OR</span></div>
+        <div className="relative my-10">
+          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
+          <div className="relative flex justify-center text-[9px] font-black uppercase tracking-[0.3em]"><span className="bg-white px-6 text-slate-300">Quick Actions</span></div>
         </div>
 
-        <label className="flex flex-col items-center justify-center gap-3 bg-white/5 border-2 border-dashed border-white/5 p-5 rounded-3xl cursor-pointer hover:bg-white/10 transition-all group">
-          <Upload size={20} className="text-emerald-500 group-hover:scale-110 transition-transform"/>
-          <div className="text-center">
-            <span className="text-xs font-black uppercase block">Bulk Import Excel</span>
-          </div>
-          <input type="file" onChange={handleFileUpload} className="hidden" accept=".xlsx, .xls" />
-        </label>
+        <div className="grid grid-cols-2 gap-4">
+          <label className="flex flex-col items-center justify-center gap-3 bg-slate-50 border border-slate-100 p-6 rounded-3xl cursor-pointer hover:bg-blue-50 hover:border-blue-100 transition-all group">
+            <Upload size={20} className="text-blue-600 group-hover:scale-110 transition-transform"/>
+            <span className="text-[9px] font-black uppercase text-slate-500">Excel Import</span>
+            <input type="file" onChange={handleFileUpload} className="hidden" accept=".xlsx, .xls" />
+          </label>
 
-        <button onClick={handleClearBatch} disabled={loading} className="mt-6 w-full flex items-center justify-center gap-2 text-[10px] font-black uppercase text-red-500/40 hover:text-red-500 transition-all">
-          <Trash2 size={12}/> Clear All Student Data
-        </button>
-
+          <button className="flex flex-col items-center justify-center gap-3 bg-red-50/30 border border-red-50 p-6 rounded-3xl hover:bg-red-50 transition-all group">
+            <Trash2 size={20} className="text-red-400 group-hover:scale-110 transition-transform"/>
+            <span className="text-[9px] font-black uppercase text-red-400">Clear Batch</span>
+          </button>
+        </div>
       </div>
     </div>
   );
