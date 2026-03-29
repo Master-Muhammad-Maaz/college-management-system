@@ -13,74 +13,56 @@ export default function AdminLogin() {
   const handleLogin = async (e: any) => {
     e.preventDefault()
     setLoading(true)
-
     try {
-      // FINAL RENDER BACKEND URL
       const backendUrl = "https://college-management-system-ae1l.onrender.com/api/login"
-
       const res = await fetch(backendUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          contact, 
-          dob, 
-          role: "admin" 
-        })
+        body: JSON.stringify({ contact, dob, role: "admin" })
       })
-
       const data = await res.json()
-      
       if (res.ok && data.success) {
-        alert("Login Successful! Welcome Admin.")
-        
-        // Agar aap JWT token use kar rahe hain toh ise save karein
-        if (data.token) {
-          localStorage.setItem("token", data.token)
-        }
-        
-        // Dashboard par bhejien
-        router.push("/admin-dashboard")
+        if (data.token) localStorage.setItem("token", data.token)
+        router.push("/admin/students") // Updated to your management path
       } else {
-        // Database mein agar user nahi mila toh ye message dikhayega
-        alert(data.message || "Login failed. Please check your Contact Number and DOB.")
+        alert(data.message || "Login failed.")
       }
     } catch (error) {
-      console.error("Login Error:", error)
-      alert("Server se connection nahi ho paa raha. Please check if Backend is running.")
+      alert("Server connection failed.")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-900 to-black">
+    <div className="min-h-screen flex items-center justify-center bg-[#050a18]">
       <motion.div 
-        initial={{ opacity: 0, y: 40 }} 
-        animate={{ opacity: 1, y: 0 }} 
-        className="bg-blue-800/40 backdrop-blur-md p-10 rounded-2xl shadow-xl w-96"
+        initial={{ opacity: 0, scale: 0.95 }} 
+        animate={{ opacity: 1, scale: 1 }} 
+        className="bg-[#0c1633] p-12 rounded-[40px] shadow-2xl w-full max-w-md border border-white/5"
       >
-        <h1 className="text-3xl font-bold text-center text-white mb-8">Admin Login</h1>
+        <h1 className="text-4xl font-black text-center text-white mb-10 tracking-tight">Admin Login</h1>
         
-        <form onSubmit={handleLogin} className="space-y-5">
-          <div>
-            <label className="text-white text-sm mb-1 block">Contact Number</label>
+        <form onSubmit={handleLogin} className="space-y-8">
+          <div className="space-y-2">
+            <label className="text-white/70 text-xs font-black uppercase tracking-widest ml-1">Contact Number</label>
             <input 
               type="text" 
               placeholder="Enter Contact Number" 
               value={contact} 
               onChange={(e) => setContact(e.target.value)} 
-              className="w-full p-3 rounded-lg bg-gray-900 text-white outline-none border border-gray-700 focus:border-indigo-500" 
+              className="w-full p-5 rounded-2xl bg-[#161f3d] text-white outline-none border border-white/5 focus:border-indigo-500 transition-all font-bold" 
               required 
             />
           </div>
 
-          <div>
-            <label className="text-white text-sm mb-1 block">Date of Birth</label>
+          <div className="space-y-2">
+            <label className="text-white/70 text-xs font-black uppercase tracking-widest ml-1">Date of Birth</label>
             <input 
               type="date" 
               value={dob} 
               onChange={(e) => setDob(e.target.value)} 
-              className="w-full p-3 rounded-lg bg-gray-900 text-white outline-none border border-gray-700 focus:border-indigo-500" 
+              className="w-full p-5 rounded-2xl bg-[#161f3d] text-white outline-none border border-white/5 focus:border-indigo-500 transition-all font-bold uppercase" 
               required 
             />
           </div>
@@ -88,17 +70,15 @@ export default function AdminLogin() {
           <button 
             type="submit" 
             disabled={loading}
-            className={`w-full py-3 rounded-lg font-semibold text-white transition-all ${
-              loading ? "bg-gray-600 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
-            }`}
+            className="w-full py-5 rounded-2xl font-black text-sm uppercase tracking-[0.2em] text-white bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-500/20 transition-all active:scale-95"
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Verifying..." : "Login"}
           </button>
         </form>
 
-        <p className="text-center text-gray-300 mt-6 text-sm">
+        <p className="text-center text-white/40 mt-10 text-[11px] font-black uppercase tracking-widest">
           Don't have an account?{" "}
-          <Link href="/register?role=admin" className="text-blue-300 hover:underline font-medium">
+          <Link href="/register?role=admin" className="text-indigo-400 hover:text-white transition-colors">
             Register here
           </Link>
         </p>
