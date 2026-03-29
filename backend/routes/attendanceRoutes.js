@@ -4,7 +4,40 @@ const Attendance = require("../models/Attendance");
 const StudentRecord = require("../models/StudentRecord");
 const ExcelJS = require("exceljs");
 
-// 1. Mark Single Attendance
+// 1. BULK SYNC (Frontend "Sync Records" Button ke liye)
+// Ye route P, A, H ko Present, Absent, Holiday mein convert karke save karega
+router.post("/bulk-sync", async (req, res) => {
+  try {
+    const { date, course, records } = req.body; // records format: { "studentId": "P" }
+
+    const operations = Object.entries(records).map(([studentId, statusAbbr]) => {
+      // Mapping Abbreviations to Schema Enums
+      let fullStatus = "Present";
+      if (statusAbbr === 'A') fullStatus = "Absent";
+      if (statusAbbr === 'H') fullStatus = "Holiday";
+
+      return {
+        updateOne: {
+          filter: { studentId, date },
+          update: { studentId, date, status: fullStatus, course },
+          upsert: true
+        }
+      };
+    });
+
+    if (operations.length === 0) {
+      return res.status(400).json({ success: false, message: "No records provided" });
+    }
+
+    await Attendance.bulkWrite(operations);
+    res.json({ success: true, message: "Attendance synced successfully!" });
+  } catch (err) {
+    console.error("Bulk Sync Error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 2. Mark Single Attendance (Optional/Existing)
 router.post("/mark", async (req, res) => {
   try {
     const { studentId, date, status, course } = req.body;
@@ -14,28 +47,6 @@ router.post("/mark", async (req, res) => {
       { upsert: true, new: true }
     );
     res.json({ success: true, record });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// 2. Mark Holiday for Entire Course
-router.post("/mark-holiday", async (req, res) => {
-  try {
-    const { date, course } = req.body;
-    const students = await StudentRecord.find({ course });
-    if (students.length === 0) return res.status(404).json({ success: false, message: "No students found." });
-
-    const holidayOperations = students.map(st => ({
-      updateOne: {
-        filter: { studentId: st._id, date: date },
-        update: { studentId: st._id, date: date, status: "Holiday", course: course },
-        upsert: true
-      }
-    }));
-
-    await Attendance.bulkWrite(holidayOperations);
-    res.json({ success: true, message: `${course} Holiday Marked!` });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -52,12 +63,14 @@ router.get("/today/:date/:course", async (req, res) => {
   }
 });
 
-// 4. DETAILED EXCEL EXPORT (Date Format: 17-03-2026)
-router.get("/export-report/:course", async (req, res) => {
+// 4. DETAILED EXCEL EXPORT (Updated to handle Frontend Query Params)
+router.get("/export", async (req, res) => {
   try {
-    const { course } = req.params;
-    
-    // Data Fetching
+    // Frontend se 'course' query param mein aa raha hai
+    const { course } = req.query; 
+
+    if (!course) return res.status(400).send("Course is required for export.");
+
     const students = await StudentRecord.find({ course }).sort({ srNo: 1 });
     const attendanceRecords = await Attendance.find({ course });
 
@@ -65,60 +78,43 @@ router.get("/export-report/:course", async (req, res) => {
       return res.status(404).send("Is course mein koi students nahi hain.");
     }
 
-    // Unique dates nikal kar sort karna
     const allDates = [...new Set(attendanceRecords.map(r => r.date))].sort();
-
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(`${course} Attendance`);
 
-    // Headers Setup (Sr.no aur Student Name)
+    // Column Configuration
     let columns = [
       { header: "Sr.no", key: "srNo", width: 10 },
       { header: "Student Name", key: "name", width: 30 },
     ];
 
-    // Dates ko DD-MM-YYYY format mein convert karke headers mein daalna
     allDates.forEach(date => {
       const formattedHeader = date.split('-').reverse().join('-'); 
       columns.push({ header: formattedHeader, key: date, width: 15 });
     });
 
-    // Final Summary columns (Jaisa aapne image mein manga tha)
     columns.push(
-      { header: "No. Of Present Day", key: "pCount", width: 18 },
-      { header: "No. Of Absent Day", key: "aCount", width: 18 },
-      { header: "No. Of holidays", key: "hCount", width: 15 },
-      { header: "attendance percentage", key: "percentage", width: 20 }
+      { header: "Total Present", key: "pCount", width: 15 },
+      { header: "Total Absent", key: "aCount", width: 15 },
+      { header: "Total Holidays", key: "hCount", width: 15 },
+      { header: "Percentage (%)", key: "percentage", width: 15 }
     );
 
     worksheet.columns = columns;
 
-    // Row-by-row data filling
+    // Data Row Generation
     students.forEach(student => {
       const studentAt = attendanceRecords.filter(r => r.studentId.toString() === student._id.toString());
-      
-      let rowData = {
-        srNo: student.srNo,
-        name: student.name
-      };
-
+      let rowData = { srNo: student.srNo, name: student.name };
       let p = 0, a = 0, h = 0;
 
-      // Har unique date ke liye status check karke usey cell mein map karna
       allDates.forEach(date => {
         const record = studentAt.find(r => r.date === date);
         if (record) {
-          // Yahan hum status ko uski date ki key ke sath save kar rahe hain
-          if (record.status === "Present") { 
-            rowData[date] = "Present"; 
-            p++; 
-          } else if (record.status === "Absent") { 
-            rowData[date] = "Absent"; 
-            a++; 
-          } else if (record.status === "Holiday") { 
-            rowData[date] = "Holiday"; 
-            h++; 
-          }
+          rowData[date] = record.status;
+          if (record.status === "Present") p++;
+          else if (record.status === "Absent") a++;
+          else if (record.status === "Holiday") h++;
         } else {
           rowData[date] = "-";
         }
@@ -135,14 +131,13 @@ router.get("/export-report/:course", async (req, res) => {
       worksheet.addRow(rowData);
     });
 
-    // Excel Styling (Bold Blue Headers)
+    // Styling
     worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
     worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } };
-    worksheet.getRow(1).alignment = { horizontal: 'center', vertical: 'middle' };
+    worksheet.getRow(1).alignment = { horizontal: 'center' };
 
-    // Final Response
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    res.setHeader("Content-Disposition", `attachment; filename=${course}_Report.xlsx`);
+    res.setHeader("Content-Disposition", `attachment; filename=${course}_Attendance_Report.xlsx`);
 
     await workbook.xlsx.write(res);
     res.end();
