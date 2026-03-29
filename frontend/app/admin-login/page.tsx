@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
+import { ShieldCheck, Loader2 } from "lucide-react"
 
 export default function AdminLogin() {
   const router = useRouter()
@@ -23,7 +24,7 @@ export default function AdminLogin() {
       const data = await res.json()
       if (res.ok && data.success) {
         if (data.token) localStorage.setItem("token", data.token)
-        router.push("/admin/students") // Updated to your management path
+        router.push("/admin/students")
       } else {
         alert(data.message || "Login failed.")
       }
@@ -35,52 +36,81 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#050a18]">
+    <div className="min-h-screen flex items-center justify-center bg-white p-6">
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }} 
-        animate={{ opacity: 1, scale: 1 }} 
-        className="bg-[#0c1633] p-12 rounded-[40px] shadow-2xl w-full max-w-md border border-white/5"
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        className="w-full max-w-[480px]"
       >
-        <h1 className="text-4xl font-black text-center text-white mb-10 tracking-tight">Admin Login</h1>
+        {/* Logo/Icon Area */}
+        <div className="flex flex-col items-center mb-12">
+          <div className="p-5 bg-blue-50 rounded-[30px] text-blue-600 mb-6 shadow-sm border border-blue-100">
+            <ShieldCheck size={40} strokeWidth={2.5} />
+          </div>
+          <h1 className="text-4xl font-[1000] text-[#0f172a] text-center tracking-tighter uppercase">
+            Admin Portal
+          </h1>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-3">
+            Secure Infrastructure Access
+          </p>
+        </div>
         
-        <form onSubmit={handleLogin} className="space-y-8">
-          <div className="space-y-2">
-            <label className="text-white/70 text-xs font-black uppercase tracking-widest ml-1">Contact Number</label>
-            <input 
-              type="text" 
-              placeholder="Enter Contact Number" 
-              value={contact} 
-              onChange={(e) => setContact(e.target.value)} 
-              className="w-full p-5 rounded-2xl bg-[#161f3d] text-white outline-none border border-white/5 focus:border-indigo-500 transition-all font-bold" 
-              required 
-            />
+        <div className="bg-white p-10 md:p-14 rounded-[50px] border border-slate-100 shadow-2xl shadow-slate-200/50">
+          <form onSubmit={handleLogin} className="space-y-8">
+            <div className="space-y-2">
+              <label className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] ml-2">
+                Contact Identity
+              </label>
+              <input 
+                type="text" 
+                placeholder="Enter registered number" 
+                value={contact} 
+                onChange={(e) => setContact(e.target.value)} 
+                className="w-full p-6 rounded-3xl bg-slate-50 text-slate-900 outline-none border border-slate-100 focus:border-blue-600 focus:bg-white transition-all font-bold placeholder:text-slate-300 shadow-inner" 
+                required 
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] ml-2">
+                Security Key (DOB)
+              </label>
+              <input 
+                type="date" 
+                value={dob} 
+                onChange={(e) => setDob(e.target.value)} 
+                className="w-full p-6 rounded-3xl bg-slate-50 text-slate-900 outline-none border border-slate-100 focus:border-blue-600 focus:bg-white transition-all font-bold uppercase shadow-inner" 
+                required 
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full py-6 rounded-3xl font-black text-[11px] uppercase tracking-[0.3em] text-white bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin" size={18} />
+                  Verifying...
+                </>
+              ) : "Authorize Access"}
+            </button>
+          </form>
+
+          <div className="mt-12 pt-8 border-t border-slate-50 text-center">
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">
+              New Administrator?{" "}
+              <Link href="/register?role=admin" className="text-blue-600 hover:underline decoration-2 underline-offset-4 transition-all">
+                Create Account
+              </Link>
+            </p>
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <label className="text-white/70 text-xs font-black uppercase tracking-widest ml-1">Date of Birth</label>
-            <input 
-              type="date" 
-              value={dob} 
-              onChange={(e) => setDob(e.target.value)} 
-              className="w-full p-5 rounded-2xl bg-[#161f3d] text-white outline-none border border-white/5 focus:border-indigo-500 transition-all font-bold uppercase" 
-              required 
-            />
-          </div>
-
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full py-5 rounded-2xl font-black text-sm uppercase tracking-[0.2em] text-white bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-500/20 transition-all active:scale-95"
-          >
-            {loading ? "Verifying..." : "Login"}
-          </button>
-        </form>
-
-        <p className="text-center text-white/40 mt-10 text-[11px] font-black uppercase tracking-widest">
-          Don't have an account?{" "}
-          <Link href="/register?role=admin" className="text-indigo-400 hover:text-white transition-colors">
-            Register here
-          </Link>
+        {/* System Footer */}
+        <p className="text-center mt-10 text-[9px] font-black text-slate-300 uppercase tracking-[0.5em]">
+          Powered by CodeMatrix Software Solution
         </p>
       </motion.div>
     </div>
