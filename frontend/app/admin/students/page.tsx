@@ -1,9 +1,9 @@
 "use client"
 import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { 
   Users, UserPlus, Loader2, FileDown, 
-  CalendarDays, BookOpen, CheckCircle2, XCircle 
+  CalendarDays, BookOpen, CheckCircle2, XCircle, Calendar
 } from "lucide-react"
 import Link from "next/link"
 import AddStudentModal from "../../../components/AddStudentModal";
@@ -15,6 +15,9 @@ export default function AdminManagement() {
   const [loading, setLoading] = useState(false)
   const [isAttendanceMode, setIsAttendanceMode] = useState(false)
   const [attendance, setAttendance] = useState<Record<string, 'P' | 'A'>>({})
+  
+  // --- DATE SELECTION MECHANISM ---
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
 
   const courses = ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II"]
   const API_BASE = "https://college-management-system-ae1l.onrender.com";
@@ -46,7 +49,7 @@ export default function AdminManagement() {
       <div className="max-w-7xl mx-auto">
         
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+        <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4 border-b border-slate-50 pb-8">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-100">
               <Users size={24} />
@@ -57,6 +60,20 @@ export default function AdminManagement() {
                 {isAttendanceMode ? "Swipe: Up (P) | Down (A)" : "System Control Center"}
               </p>
             </div>
+          </div>
+
+          {/* DATE SELECTOR */}
+          <div className="flex items-center gap-3 bg-slate-50 p-2.5 px-5 rounded-2xl border border-slate-100 shadow-inner">
+            <Calendar size={14} className="text-blue-600" />
+            <input 
+              type="date" 
+              value={selectedDate}
+              onChange={(e) => {
+                setSelectedDate(e.target.value);
+                setAttendance({}); // Clear attendance on date change
+              }}
+              className="bg-transparent border-none outline-none text-[10px] font-black text-blue-600 uppercase cursor-pointer"
+            />
           </div>
           
           <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
@@ -93,14 +110,14 @@ export default function AdminManagement() {
         </div>
 
         {/* Table Area */}
-        <div className="bg-white rounded-[40px] border border-slate-100 shadow-2xl overflow-hidden">
+        <div className="bg-white rounded-[40px] border border-slate-100 shadow-2xl overflow-hidden min-h-[400px]">
           <div className="p-6 bg-slate-50/50 border-b border-slate-50 flex justify-between items-center">
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-              {isAttendanceMode ? "Drag Rows Up/Down to Mark" : "Student List"} — {selectedCourse}
+              {isAttendanceMode ? `Swipe for ${selectedDate}` : "Student List"} — {selectedCourse}
             </h2>
             {isAttendanceMode && Object.keys(attendance).length > 0 && (
-              <button className="bg-blue-600 text-white px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-200">
-                Sync {Object.keys(attendance).length} Records
+              <button className="bg-blue-600 text-white px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">
+                Sync {Object.keys(attendance).length} on {selectedDate}
               </button>
             )}
           </div>
