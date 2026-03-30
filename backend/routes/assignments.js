@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const Folder = require('../models/Folder');
+const Assignment = require('../models/Assignment');
 const multer = require('multer');
 const path = require('path');
-const Assignment = require('../models/Assignment');
-const Folder = require('../models/Folder');
 
-// 1. Multer Setup
+// Multer Setup
 const storage = multer.diskStorage({
     destination: (req, file, cb) => { cb(null, 'uploads/'); },
     filename: (req, file, cb) => {
@@ -13,15 +13,15 @@ const storage = multer.diskStorage({
         cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
     }
 });
-const upload = multer({ storage: storage, limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = multer({ storage: storage });
 
-// --- 🚀 FIX 1: DRIVE CONTENT ROUTE (Frontend isi ko call kar raha hai) ---
+// 🚀 1. DRIVE CONTENT ROUTER (Root aur Nested dono handle karega)
 router.get('/content/:course/:folderId', async (req, res) => {
     try {
         const { course, folderId } = req.params;
         
-        // Agar folderId "root" hai, toh parentId: null search karein
-        const queryParentId = folderId === "root" ? null : folderId;
+        // Agar Frontend se "root" aaye, toh null (top-level) search karo
+        const queryParentId = (folderId === "root" || folderId === "null" || !folderId) ? null : folderId;
 
         const folders = await Folder.find({ course, parentId: queryParentId }).sort({ createdAt: -1 });
         const files = await Assignment.find({ course, folderId: queryParentId }).sort({ createdAt: -1 });
@@ -32,55 +32,37 @@ router.get('/content/:course/:folderId', async (req, res) => {
     }
 });
 
-// --- 🚀 FIX 2: CREATE FOLDER WITH PARENT ID ---
+// 🚀 2. CREATE FOLDER (ParentId support ke saath)
 router.post('/create-folder', async (req, res) => {
     try {
-        const { name, course, parentId } = req.body; // parentId yahan se aayega
-        if (!name) return res.status(400).json({ success: false, message: "Folder name is required" });
+        const { name, course, parentId } = req.body;
+        if (!name) return res.status(400).json({ success: false, message: "Name required" });
 
         const newFolder = new Folder({ 
             name, 
-            course,
-            parentId: parentId || null // Google Drive Logic
+            course, 
+            parentId: parentId || null 
         });
 
         await newFolder.save();
-        res.status(200).json({ success: true, message: "Folder Created!", folder: newFolder });
+        res.status(200).json({ success: true, folder: newFolder });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// --- 🚀 FIX 3: ASSIGNMENT UPLOAD ---
+// 🚀 3. FILE UPLOAD
 router.post('/add', upload.single('file'), async (req, res) => {
     try {
-        const { fileName, teacherName, course, semester, type, content, deadline, folderId } = req.body;
-        
-        const newAssignment = new Assignment({
-            fileName, 
-            teacherName, 
-            course, 
-            semester, 
-            type, 
-            deadline, 
-            folderId: folderId || null, // Kis folder mein save karna hai
-            content: type === 'text' ? content : undefined,
-            fileUrl: type === 'file' ? req.file.filename : undefined,
-            isLatest: true
+        const { fileName, teacherName, course, folderId } = req.body;
+        const newFile = new Assignment({
+            fileName, teacherName, course,
+            folderId: folderId || null,
+            fileUrl: req.file.filename,
+            type: 'file'
         });
-
-        await newAssignment.save();
-        res.status(200).json({ success: true, message: "File Uploaded!" });
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
-
-// Purane routes (compatibility ke liye):
-router.get('/folders/:course', async (req, res) => {
-    try {
-        const folders = await Folder.find({ course: req.params.course, parentId: null });
-        res.json({ success: true, folders });
+        await newFile.save();
+        res.json({ success: true });
     } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
