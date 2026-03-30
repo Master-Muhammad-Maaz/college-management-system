@@ -6,11 +6,11 @@ import {
   CalendarDays, CheckCircle2, XCircle, Calendar, Trees, Trash2, Upload,
   FolderPlus, Folder, ChevronRight 
 } from "lucide-react"
-// FIX: Named import for AddStudentModal
 import { AddStudentModal } from "../../../components/AddStudentModal";
 
 export default function AdminManagement() {
   const [students, setStudents] = useState([])
+  const [folders, setFolders] = useState([]) // Folders state added
   const [selectedCourse, setSelectedCourse] = useState("B.Sc-I")
   const [showModal, setShowModal] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -23,6 +23,7 @@ export default function AdminManagement() {
   const courses = ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II"]
   const API_BASE = "https://college-management-system-ae1l.onrender.com";
 
+  // --- FETCH STUDENTS ---
   const fetchStudents = async () => {
     setLoading(true);
     try {
@@ -36,9 +37,26 @@ export default function AdminManagement() {
     finally { setLoading(false); }
   }
 
-  useEffect(() => { fetchStudents(); }, [selectedCourse])
+  // --- FETCH FOLDERS (E-REPOSITORY) ---
+  const fetchFolders = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/assignments/folders/${selectedCourse}`);
+      const data = await res.json();
+      if (data.success) {
+        setFolders(data.folders);
+      }
+    } catch (err) {
+      console.error("Folder Fetch Error:", err);
+    }
+  };
 
-  // --- REPOSITORY LOGIC ---
+  // Sync both data on course change
+  useEffect(() => { 
+    fetchStudents(); 
+    fetchFolders();
+  }, [selectedCourse])
+
+  // --- REPOSITORY LOGIC (CREATE FOLDER) ---
   const handleCreateFolder = async () => {
     const folderName = prompt("Enter Folder Name (e.g. Unit-1 Notes):");
     if (!folderName) return;
@@ -51,57 +69,20 @@ export default function AdminManagement() {
         body: JSON.stringify({ name: folderName, course: selectedCourse })
       });
       const data = await res.json();
-      if (data.success) alert("Folder Created Successfully!");
-      else alert("Error: " + data.message);
-    } catch (err) { alert("Server unreachable."); }
-    finally { setLoading(false); }
-  }
-
-  // --- EXCEL IMPORT LOGIC WITH FALLBACK COURSE ---
-  const handleExcelImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("fallbackCourse", selectedCourse); // Added fallback course
-
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_BASE}/api/students/import-excel`, {
-        method: "POST",
-        body: formData,
-      });
-      const result = await response.json();
-      if (result.success) {
-        alert(result.message);
-        fetchStudents();
-      } else { alert("Import Failed: " + result.message); }
-    } catch (err) { alert("Server error during import."); }
-    finally { setLoading(false); e.target.value = ""; }
-  }
-
-  // --- CLEAR BATCH LOGIC ---
-  const handleClearBatch = async () => {
-    const pincode = prompt("Enter Secret Pincode to Clear Batch:");
-    if (!pincode) return;
-    if (pincode !== "1234") return alert("Wrong Pincode!");
-
-    if (confirm(`Delete ALL students from ${selectedCourse}?`)) {
-      setLoading(true);
-      try {
-        const res = await fetch(`${API_BASE}/api/students/clear-batch`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ course: selectedCourse, pincode })
-        });
-        const data = await res.json();
-        if (data.success) { alert(data.message); fetchStudents(); }
-      } catch (err) { alert("Server error."); }
-      finally { setLoading(false); }
+      if (data.success) {
+        alert("✅ Folder Created Successfully!");
+        fetchFolders(); // Refresh list immediately
+      } else {
+        alert("❌ Error: " + data.message);
+      }
+    } catch (err) { 
+      alert("⚠️ Server unreachable. Make sure Backend is awake!"); 
+    } finally { 
+      setLoading(false); 
     }
   }
 
+  // --- ATTENDANCE & SYNC LOGIC ---
   const handleSyncAttendance = async () => {
     const recordCount = Object.keys(attendance).length;
     if (recordCount === 0) return alert("Nothing to sync!");
@@ -119,6 +100,41 @@ export default function AdminManagement() {
       }
     } catch (err) { alert("Server unreachable."); }
     finally { setLoading(false); }
+  }
+
+  // --- EXCEL & BATCH LOGIC ---
+  const handleExcelImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("fallbackCourse", selectedCourse);
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/students/import-excel`, { method: "POST", body: formData });
+      const result = await response.json();
+      if (result.success) { alert(result.message); fetchStudents(); }
+      else { alert("Import Failed: " + result.message); }
+    } catch (err) { alert("Server error."); }
+    finally { setLoading(false); e.target.value = ""; }
+  }
+
+  const handleClearBatch = async () => {
+    const pincode = prompt("Enter Secret Pincode to Clear Batch:");
+    if (pincode !== "1234") return alert("Wrong Pincode!");
+    if (confirm(`Delete ALL students from ${selectedCourse}?`)) {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/students/clear-batch`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ course: selectedCourse, pincode })
+        });
+        const data = await res.json();
+        if (data.success) { alert(data.message); fetchStudents(); }
+      } catch (err) { alert("Server error."); }
+      finally { setLoading(false); }
+    }
   }
 
   const handleExportExcel = () => {
@@ -154,7 +170,7 @@ export default function AdminManagement() {
               {isHolidayMode ? <Trees size={24} className="text-white" /> : <Users size={24} className="text-white" />}
             </div>
             <div>
-              <h1 className="text-2xl font-black uppercase tracking-tighter italic">ADMIN PANEL</h1>
+              <h1 className="text-2xl font-black uppercase tracking-tighter italic text-slate-900">ADMIN PANEL</h1>
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{selectedCourse} Management</p>
             </div>
           </div>
@@ -210,7 +226,7 @@ export default function AdminManagement() {
           ))}
         </div>
 
-        {/* Quick Actions (Excel Import & Updated Clear Batch) */}
+        {/* Quick Actions (Excel & Clear) */}
         {!isRepositoryMode && (
           <div className="grid grid-cols-2 gap-4 mb-8">
              <label className="flex flex-col items-center justify-center p-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[30px] cursor-pointer hover:bg-slate-100 transition-all">
@@ -239,11 +255,29 @@ export default function AdminManagement() {
                   + Create New Folder
                 </button>
               </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-10 border-2 border-dashed rounded-[30px] flex flex-col items-center justify-center text-slate-300">
-                  <Folder size={40} className="mb-3 opacity-20" />
-                  <span className="text-[10px] font-black uppercase italic tracking-widest">No Folders Found</span>
-                </div>
+                {folders.length > 0 ? (
+                  folders.map((f: any) => (
+                    <div key={f._id} className="p-6 bg-slate-50 border border-slate-100 rounded-[30px] flex items-center justify-between group hover:bg-white hover:shadow-xl transition-all cursor-pointer">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-indigo-100 rounded-2xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                          <Folder size={20} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-slate-800 tracking-tight">{f.name}</p>
+                          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">View Files</p>
+                        </div>
+                      </div>
+                      <ChevronRight size={16} className="text-slate-300" />
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full p-20 border-2 border-dashed rounded-[30px] flex flex-col items-center justify-center text-slate-300">
+                    <Folder size={40} className="mb-3 opacity-20" />
+                    <span className="text-[10px] font-black uppercase italic tracking-widest">No Folders Found</span>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
