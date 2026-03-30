@@ -4,9 +4,10 @@ import { motion } from "framer-motion"
 import { 
   Users, UserPlus, Loader2, FileDown, 
   CalendarDays, CheckCircle2, XCircle, Calendar, Trees, Trash2, Upload,
-  FolderPlus, Folder, ChevronRight // Naye icons add kiye
+  FolderPlus, Folder, ChevronRight 
 } from "lucide-react"
-import AddStudentModal from "../../../components/AddStudentModal";
+// FIX: Added curly braces to match the named export of your component
+import { AddStudentModal } from "../../../components/AddStudentModal";
 
 export default function AdminManagement() {
   const [students, setStudents] = useState([])
@@ -15,7 +16,7 @@ export default function AdminManagement() {
   const [loading, setLoading] = useState(false)
   const [isAttendanceMode, setIsAttendanceMode] = useState(false)
   const [isHolidayMode, setIsHolidayMode] = useState(false)
-  const [isRepositoryMode, setIsRepositoryMode] = useState(false) // New state for folders
+  const [isRepositoryMode, setIsRepositoryMode] = useState(false) 
   const [attendance, setAttendance] = useState<Record<string, 'P' | 'A' | 'H'>>({})
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
 
@@ -191,7 +192,6 @@ export default function AdminManagement() {
             <span className="text-[9px] font-black uppercase text-slate-600 group-hover:text-white">Export Excel</span>
           </button>
 
-          {/* NEW: REPOSITORY TOGGLE BUTTON */}
           <button 
             onClick={() => setIsRepositoryMode(!isRepositoryMode)} 
             className={`flex flex-col items-center justify-center p-6 border rounded-[30px] transition-all ${isRepositoryMode ? "bg-indigo-600 text-white" : "bg-indigo-50 hover:bg-indigo-600 group"}`}
@@ -210,7 +210,7 @@ export default function AdminManagement() {
           ))}
         </div>
 
-        {/* Quick Actions (Excel Import & Clear Batch) */}
+        {/* Quick Actions */}
         {!isRepositoryMode && (
           <div className="grid grid-cols-2 gap-4 mb-8">
              <label className="flex flex-col items-center justify-center p-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[30px] cursor-pointer hover:bg-slate-100 transition-all">
@@ -226,22 +226,19 @@ export default function AdminManagement() {
           </div>
         )}
 
-        {/* Main Content Area (Table or Repository) */}
+        {/* Content Area */}
         <div className="bg-white rounded-[40px] border shadow-2xl overflow-hidden min-h-[400px] relative">
-          
           {isRepositoryMode ? (
-            // REPOSITORY VIEW
             <div className="p-8">
               <div className="flex justify-between items-center mb-10">
                 <div>
-                  <h3 className="font-black text-lg uppercase tracking-tighter italic">E-REPOSITORY</h3>
+                  <h3 className="font-black text-lg uppercase tracking-tighter italic text-indigo-600">E-REPOSITORY</h3>
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Digital Library for {selectedCourse}</p>
                 </div>
                 <button onClick={handleCreateFolder} className="bg-slate-900 text-white px-8 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all">
                   + Create New Folder
                 </button>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-10 border-2 border-dashed rounded-[30px] flex flex-col items-center justify-center text-slate-300">
                   <Folder size={40} className="mb-3 opacity-20" />
@@ -250,7 +247,6 @@ export default function AdminManagement() {
               </div>
             </div>
           ) : (
-            // ATTENDANCE VIEW
             <>
               <div className="p-6 border-b flex justify-between items-center bg-slate-50/30">
                  <div className="flex gap-2">
@@ -263,7 +259,6 @@ export default function AdminManagement() {
                    </div>
                  )}
               </div>
-              
               <table className="w-full text-left">
                 <thead>
                   <tr className="border-b">
@@ -305,7 +300,6 @@ export default function AdminManagement() {
           {loading && <div className="flex justify-center p-20"><Loader2 className="animate-spin text-blue-600" size={40} /></div>}
         </div>
       </div>
-
       {showModal && (
         <AddStudentModal isOpen={showModal} onClose={() => setShowModal(false)} fetchStudents={fetchStudents} course={selectedCourse} />
       )}
