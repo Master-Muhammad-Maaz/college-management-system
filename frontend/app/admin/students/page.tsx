@@ -3,27 +3,24 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { 
   Users, UserPlus, Loader2, FileDown, 
-  CalendarDays, CheckCircle2, XCircle, Calendar, Trees, Trash2, Upload,
-  FolderPlus, Folder, ChevronRight, FileText, ArrowLeft
+  CalendarDays, CheckCircle2, Calendar, Trees, Upload,
+  FolderPlus, Folder, ChevronRight, FileText
 } from "lucide-react"
 import { AddStudentModal } from "../../../components/AddStudentModal";
 
 export default function AdminManagement() {
   const [students, setStudents] = useState([])
   const [folders, setFolders] = useState([])
-  const [files, setFiles] = useState([]) // Us folder ki files
+  const [files, setFiles] = useState([])
   const [selectedCourse, setSelectedCourse] = useState("B.Sc-I")
   const [showModal, setShowModal] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [isAttendanceMode, setIsAttendanceMode] = useState(false)
   const [isHolidayMode, setIsHolidayMode] = useState(false)
   const [isRepositoryMode, setIsRepositoryMode] = useState(false) 
   
   // --- DRIVE STATES ---
-  const [currentFolder, setCurrentFolder] = useState<any>(null) // null = Root
-  const [path, setPath] = useState<any[]>([]) // For Breadcrumbs
-  
-  const [attendance, setAttendance] = useState<Record<string, 'P' | 'A' | 'H'>>({})
+  const [currentFolder, setCurrentFolder] = useState<any>(null) 
+  const [path, setPath] = useState<any[]>([]) 
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
 
   const courses = ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II"]
@@ -33,10 +30,11 @@ export default function AdminManagement() {
   const fetchDriveContent = async () => {
     setLoading(true);
     try {
-      const folderId = currentFolder ? currentFolder._id : "root";
-      // Backend api to fetch folders AND files for this specific folder/course
+      // 🚀 Fix: Ensure folderId is always a valid string for the API
+      const folderId = currentFolder?._id ? currentFolder._id : "root";
       const res = await fetch(`${API_BASE}/api/assignments/content/${selectedCourse}/${folderId}`);
       const data = await res.json();
+      
       if (data.success) {
         setFolders(data.folders || []);
         setFiles(data.files || []);
@@ -47,6 +45,16 @@ export default function AdminManagement() {
       setLoading(false);
     }
   };
+
+  const fetchStudents = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/students/list?course=${selectedCourse}`)
+      const data = await res.json()
+      if (data.success) setStudents(data.students);
+    } catch (err) { console.error(err); } 
+    finally { setLoading(false); }
+  }
 
   useEffect(() => {
     if (isRepositoryMode) fetchDriveContent();
@@ -73,10 +81,11 @@ export default function AdminManagement() {
   // --- CREATE & UPLOAD ---
   const handleCreateFolder = async () => {
     const folderName = prompt("Enter Folder Name:");
-    if (!folderName) return;
+    if (!folderName || folderName.trim() === "") return;
+
     setLoading(true);
     try {
-      await fetch(`${API_BASE}/api/assignments/create-folder`, {
+      const res = await fetch(`${API_BASE}/api/assignments/create-folder`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -85,21 +94,28 @@ export default function AdminManagement() {
             parentId: currentFolder ? currentFolder._id : null 
         })
       });
-      fetchDriveContent();
-    } catch (err) { alert("Error creating folder"); }
-    finally { setLoading(false); }
+      const data = await res.json();
+      if (data.success) {
+        // ✅ Instant Refresh
+        await fetchDriveContent();
+      }
+    } catch (err) { 
+      alert("Error creating folder"); 
+    } finally { 
+      setLoading(false); 
+    }
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !currentFolder) return alert("Please open a folder first!");
+    if (!file) return;
 
     const fileName = prompt("Enter File Title:", file.name);
     const formData = new FormData();
     formData.append("file", file);
     formData.append("fileName", fileName || file.name);
     formData.append("course", selectedCourse);
-    formData.append("folderId", currentFolder._id);
+    formData.append("folderId", currentFolder?._id || "root");
     formData.append("teacherName", "Admin");
 
     setLoading(true);
@@ -107,28 +123,17 @@ export default function AdminManagement() {
       const res = await fetch(`${API_BASE}/api/assignments/add`, { method: "POST", body: formData });
       if (res.ok) {
         alert("✅ Uploaded!");
-        fetchDriveContent();
+        await fetchDriveContent();
       }
     } catch (err) { alert("Upload failed"); }
     finally { setLoading(false); e.target.value = ""; }
   };
 
-  // ... (Other existing functions like fetchStudents, handleSyncAttendance, etc. stay same)
-  const fetchStudents = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/students/list?course=${selectedCourse}`)
-      const data = await res.json()
-      if (data.success) { setStudents(data.students); setAttendance({}); }
-    } catch (err) { console.error(err); } 
-    finally { setLoading(false); }
-  }
-
   return (
     <div className="min-h-screen bg-white text-slate-900 p-6 md:p-10 font-sans">
       <div className="max-w-7xl mx-auto">
         
-        {/* Header - Identical to yours */}
+        {/* Header */}
         <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4 border-b pb-8">
           <div className="flex items-center gap-4">
             <div className={`p-3 rounded-2xl shadow-lg ${isHolidayMode ? "bg-orange-500" : "bg-blue-600"}`}>
@@ -145,13 +150,13 @@ export default function AdminManagement() {
           </div>
         </div>
 
-        {/* Action Grid - Navigation Buttons */}
+        {/* Action Grid */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <button onClick={() => setShowModal(true)} className="flex flex-col items-center justify-center p-6 bg-blue-50 border rounded-[30px] hover:bg-blue-600 group transition-all">
             <UserPlus className="text-blue-600 group-hover:text-white mb-2" size={24} />
             <span className="text-[9px] font-black uppercase text-blue-600 group-hover:text-white">Add Student</span>
           </button>
-          <button onClick={() => {}} className="flex flex-col items-center justify-center p-6 bg-emerald-50 border rounded-[30px] hover:bg-emerald-600 group transition-all">
+          <button className="flex flex-col items-center justify-center p-6 bg-emerald-50 border rounded-[30px] hover:bg-emerald-600 group transition-all">
              <CheckCircle2 className="text-emerald-600 group-hover:text-white mb-2" size={24} />
             <span className="text-[9px] font-black uppercase text-emerald-600 group-hover:text-white">Sync Records</span>
           </button>
@@ -181,11 +186,10 @@ export default function AdminManagement() {
           ))}
         </div>
 
-        {/* MAIN CONTENT AREA: GOOGLE DRIVE STYLE */}
+        {/* Main Content */}
         <div className="bg-white rounded-[40px] border shadow-2xl overflow-hidden min-h-[500px] relative">
           {isRepositoryMode ? (
             <div className="p-8">
-              {/* DRIVE HEADER & BREADCRUMBS */}
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
                 <div className="flex items-center gap-2 bg-slate-50 p-2 px-4 rounded-2xl border">
                   <button onClick={() => goToPath(-1)} className={`text-[9px] font-black uppercase ${!currentFolder ? 'text-indigo-600' : 'text-slate-400'}`}>Repository</button>
@@ -201,18 +205,14 @@ export default function AdminManagement() {
                   <button onClick={handleCreateFolder} className="flex-1 md:flex-none bg-slate-900 text-white px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all flex items-center justify-center gap-2">
                     <FolderPlus size={16} /> New Folder
                   </button>
-                  {currentFolder && (
-                    <label className="flex-1 md:flex-none bg-indigo-600 text-white px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 cursor-pointer transition-all flex items-center justify-center gap-2">
-                      <Upload size={16} /> Upload
-                      <input type="file" className="hidden" onChange={handleFileUpload} />
-                    </label>
-                  )}
+                  <label className="flex-1 md:flex-none bg-indigo-600 text-white px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 cursor-pointer transition-all flex items-center justify-center gap-2">
+                    <Upload size={16} /> Upload
+                    <input type="file" className="hidden" onChange={handleFileUpload} />
+                  </label>
                 </div>
               </div>
               
-              {/* GRID VIEW */}
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                {/* Render Folders */}
                 {folders.map((f: any) => (
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -229,7 +229,6 @@ export default function AdminManagement() {
                   </motion.div>
                 ))}
 
-                {/* Render Files */}
                 {files.map((file: any) => (
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
@@ -241,12 +240,17 @@ export default function AdminManagement() {
                     </div>
                     <div className="text-center">
                       <p className="text-[10px] font-black uppercase text-slate-800 tracking-tight leading-none truncate w-32">{file.fileName}</p>
-                      <button className="text-[7px] font-bold text-emerald-600 uppercase mt-1 hover:underline">Download</button>
+                      <a 
+                        href={`${API_BASE}/uploads/${file.fileUrl}`} 
+                        target="_blank" 
+                        className="text-[7px] font-bold text-emerald-600 uppercase mt-1 hover:underline block"
+                      >
+                        View File
+                      </a>
                     </div>
                   </motion.div>
                 ))}
 
-                {/* Empty State */}
                 {folders.length === 0 && files.length === 0 && !loading && (
                   <div className="col-span-full py-20 flex flex-col items-center justify-center opacity-20">
                     <Folder size={60} className="mb-4" />
@@ -256,7 +260,6 @@ export default function AdminManagement() {
               </div>
             </div>
           ) : (
-            /* Attendance View - Same as your previous code */
             <div className="p-8">
                 <p className="text-[10px] font-black text-slate-400 uppercase">Student Attendance List</p>
                 <table className="w-full mt-6 text-left">
