@@ -6,7 +6,7 @@ import {
   CalendarDays, CheckCircle2, XCircle, Calendar, Trees, Trash2, Upload,
   FolderPlus, Folder, ChevronRight 
 } from "lucide-react"
-// FIX: Added curly braces to match the named export of your component
+// FIX: Named import for AddStudentModal
 import { AddStudentModal } from "../../../components/AddStudentModal";
 
 export default function AdminManagement() {
@@ -57,14 +57,14 @@ export default function AdminManagement() {
     finally { setLoading(false); }
   }
 
-  // --- EXCEL IMPORT LOGIC ---
+  // --- EXCEL IMPORT LOGIC WITH FALLBACK COURSE ---
   const handleExcelImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("fallbackCourse", selectedCourse); 
+    formData.append("fallbackCourse", selectedCourse); // Added fallback course
 
     setLoading(true);
     try {
@@ -210,7 +210,7 @@ export default function AdminManagement() {
           ))}
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Actions (Excel Import & Updated Clear Batch) */}
         {!isRepositoryMode && (
           <div className="grid grid-cols-2 gap-4 mb-8">
              <label className="flex flex-col items-center justify-center p-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[30px] cursor-pointer hover:bg-slate-100 transition-all">
@@ -226,7 +226,7 @@ export default function AdminManagement() {
           </div>
         )}
 
-        {/* Content Area */}
+        {/* Main Content Area */}
         <div className="bg-white rounded-[40px] border shadow-2xl overflow-hidden min-h-[400px] relative">
           {isRepositoryMode ? (
             <div className="p-8">
