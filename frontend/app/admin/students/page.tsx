@@ -3,7 +3,8 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { 
   Users, UserPlus, Loader2, FileDown, 
-  CalendarDays, CheckCircle2, XCircle, Calendar, Trees, Trash2, Upload
+  CalendarDays, CheckCircle2, XCircle, Calendar, Trees, Trash2, Upload,
+  FolderPlus, Folder, ChevronRight // Naye icons add kiye
 } from "lucide-react"
 import AddStudentModal from "../../../components/AddStudentModal";
 
@@ -14,6 +15,7 @@ export default function AdminManagement() {
   const [loading, setLoading] = useState(false)
   const [isAttendanceMode, setIsAttendanceMode] = useState(false)
   const [isHolidayMode, setIsHolidayMode] = useState(false)
+  const [isRepositoryMode, setIsRepositoryMode] = useState(false) // New state for folders
   const [attendance, setAttendance] = useState<Record<string, 'P' | 'A' | 'H'>>({})
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
 
@@ -35,7 +37,26 @@ export default function AdminManagement() {
 
   useEffect(() => { fetchStudents(); }, [selectedCourse])
 
-  // --- NEW: EXCEL IMPORT LOGIC ---
+  // --- REPOSITORY LOGIC ---
+  const handleCreateFolder = async () => {
+    const folderName = prompt("Enter Folder Name (e.g. Unit-1 Notes):");
+    if (!folderName) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/assignments/create-folder`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: folderName, course: selectedCourse })
+      });
+      const data = await res.json();
+      if (data.success) alert("Folder Created Successfully!");
+      else alert("Error: " + data.message);
+    } catch (err) { alert("Server unreachable."); }
+    finally { setLoading(false); }
+  }
+
+  // --- EXCEL IMPORT LOGIC ---
   const handleExcelImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -59,7 +80,7 @@ export default function AdminManagement() {
     finally { setLoading(false); e.target.value = ""; }
   }
 
-  // --- NEW: CLEAR BATCH LOGIC ---
+  // --- CLEAR BATCH LOGIC ---
   const handleClearBatch = async () => {
     const pincode = prompt("Enter Secret Pincode to Clear Batch:");
     if (!pincode) return;
@@ -149,7 +170,7 @@ export default function AdminManagement() {
         </div>
 
         {/* Action Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <button onClick={() => setShowModal(true)} className="flex flex-col items-center justify-center p-6 bg-blue-50 border rounded-[30px] hover:bg-blue-600 group transition-all">
             <UserPlus className="text-blue-600 group-hover:text-white mb-2" size={24} />
             <span className="text-[9px] font-black uppercase text-blue-600 group-hover:text-white">Add Student</span>
@@ -169,6 +190,15 @@ export default function AdminManagement() {
             <FileDown className="text-slate-600 group-hover:text-white mb-2" size={24} />
             <span className="text-[9px] font-black uppercase text-slate-600 group-hover:text-white">Export Excel</span>
           </button>
+
+          {/* NEW: REPOSITORY TOGGLE BUTTON */}
+          <button 
+            onClick={() => setIsRepositoryMode(!isRepositoryMode)} 
+            className={`flex flex-col items-center justify-center p-6 border rounded-[30px] transition-all ${isRepositoryMode ? "bg-indigo-600 text-white" : "bg-indigo-50 hover:bg-indigo-600 group"}`}
+          >
+            <FolderPlus className={`${isRepositoryMode ? "text-white" : "text-indigo-600 group-hover:text-white"} mb-2`} size={24} />
+            <span className={`text-[9px] font-black uppercase ${isRepositoryMode ? "text-white" : "text-indigo-600 group-hover:text-white"}`}>Manage Files</span>
+          </button>
         </div>
 
         {/* Course Tabs */}
@@ -181,69 +211,97 @@ export default function AdminManagement() {
         </div>
 
         {/* Quick Actions (Excel Import & Clear Batch) */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-           <label className="flex flex-col items-center justify-center p-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[30px] cursor-pointer hover:bg-slate-100 transition-all">
-              <Upload className="text-slate-400 mb-2" size={20} />
-              <span className="text-[9px] font-black uppercase text-slate-500">Excel Import</span>
-              <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleExcelImport} />
-           </label>
+        {!isRepositoryMode && (
+          <div className="grid grid-cols-2 gap-4 mb-8">
+             <label className="flex flex-col items-center justify-center p-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[30px] cursor-pointer hover:bg-slate-100 transition-all">
+                <Upload className="text-slate-400 mb-2" size={20} />
+                <span className="text-[9px] font-black uppercase text-slate-500">Excel Import</span>
+                <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleExcelImport} />
+             </label>
 
-           <button onClick={handleClearBatch} className="flex flex-col items-center justify-center p-6 bg-red-50 border-2 border-dashed border-red-100 rounded-[30px] hover:bg-red-600 group transition-all">
-              <Trash2 className="text-red-400 group-hover:text-white mb-2" size={20} />
-              <span className="text-[9px] font-black uppercase text-red-500 group-hover:text-white">Clear Batch</span>
-           </button>
-        </div>
-
-        {/* Table View */}
-        <div className="bg-white rounded-[40px] border shadow-2xl overflow-hidden min-h-[400px] relative">
-          <div className="p-6 border-b flex justify-between items-center bg-slate-50/30">
-             <div className="flex gap-2">
-                <button onClick={() => setIsAttendanceMode(false)} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase ${!isAttendanceMode ? "bg-white shadow-sm text-blue-600" : "text-slate-400"}`}>List View</button>
-                <button onClick={() => setIsAttendanceMode(true)} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase ${isAttendanceMode ? "bg-white shadow-sm text-blue-600" : "text-slate-400"}`}>Attendance</button>
-             </div>
-             {Object.keys(attendance).length > 0 && (
-               <div className="bg-blue-600 px-4 py-1.5 rounded-full text-[9px] font-black text-white uppercase animate-pulse">
-                 {Object.keys(attendance).length} Pending Sync
-               </div>
-             )}
+             <button onClick={handleClearBatch} className="flex flex-col items-center justify-center p-6 bg-red-50 border-2 border-dashed border-red-100 rounded-[30px] hover:bg-red-600 group transition-all">
+                <Trash2 className="text-red-400 group-hover:text-white mb-2" size={20} />
+                <span className="text-[9px] font-black uppercase text-red-500 group-hover:text-white">Clear Batch</span>
+             </button>
           </div>
+        )}
+
+        {/* Main Content Area (Table or Repository) */}
+        <div className="bg-white rounded-[40px] border shadow-2xl overflow-hidden min-h-[400px] relative">
           
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b">
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400">SR</th>
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400">Student Name</th>
-                <th className="p-6 text-[10px] font-black uppercase text-slate-400 text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {!loading && students.map((s: any) => (
-                <motion.tr 
-                  key={s._id}
-                  drag={isAttendanceMode && !isHolidayMode ? "y" : false}
-                  dragConstraints={{ top: 0, bottom: 0 }}
-                  onDragEnd={(_, info) => handleDragEnd(info, s._id)}
-                  className={`border-b transition-colors ${attendance[s._id] ? 'bg-slate-50/50' : 'hover:bg-slate-50/30'}`}
-                >
-                  <td className="p-6 font-bold text-blue-600">#{s.srNo}</td>
-                  <td className="p-6 font-black text-slate-700 uppercase tracking-tight">{s.name}</td>
-                  <td className="p-6 text-right">
-                    <div className="flex justify-end items-center gap-3">
-                      {attendance[s._id] === 'H' ? (
-                        <span className="text-orange-600 text-[10px] font-black uppercase bg-orange-100 px-3 py-1 rounded-full">Holiday</span>
-                      ) : attendance[s._id] === 'P' ? (
-                        <span className="text-emerald-600 text-[10px] font-black uppercase bg-emerald-100 px-3 py-1 rounded-full">Present</span>
-                      ) : attendance[s._id] === 'A' ? (
-                        <span className="text-red-500 text-[10px] font-black uppercase bg-red-100 px-3 py-1 rounded-full">Absent</span>
-                      ) : (
-                        <span className="text-slate-300 text-[9px] font-black uppercase italic">Pending...</span>
-                      )}
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
+          {isRepositoryMode ? (
+            // REPOSITORY VIEW
+            <div className="p-8">
+              <div className="flex justify-between items-center mb-10">
+                <div>
+                  <h3 className="font-black text-lg uppercase tracking-tighter italic">E-REPOSITORY</h3>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Digital Library for {selectedCourse}</p>
+                </div>
+                <button onClick={handleCreateFolder} className="bg-slate-900 text-white px-8 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all">
+                  + Create New Folder
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-10 border-2 border-dashed rounded-[30px] flex flex-col items-center justify-center text-slate-300">
+                  <Folder size={40} className="mb-3 opacity-20" />
+                  <span className="text-[10px] font-black uppercase italic tracking-widest">No Folders Found</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            // ATTENDANCE VIEW
+            <>
+              <div className="p-6 border-b flex justify-between items-center bg-slate-50/30">
+                 <div className="flex gap-2">
+                    <button onClick={() => setIsAttendanceMode(false)} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase ${!isAttendanceMode ? "bg-white shadow-sm text-blue-600" : "text-slate-400"}`}>List View</button>
+                    <button onClick={() => setIsAttendanceMode(true)} className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase ${isAttendanceMode ? "bg-white shadow-sm text-blue-600" : "text-slate-400"}`}>Attendance</button>
+                 </div>
+                 {Object.keys(attendance).length > 0 && (
+                   <div className="bg-blue-600 px-4 py-1.5 rounded-full text-[9px] font-black text-white uppercase animate-pulse">
+                     {Object.keys(attendance).length} Pending Sync
+                   </div>
+                 )}
+              </div>
+              
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b">
+                    <th className="p-6 text-[10px] font-black uppercase text-slate-400">SR</th>
+                    <th className="p-6 text-[10px] font-black uppercase text-slate-400">Student Name</th>
+                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {!loading && students.map((s: any) => (
+                    <motion.tr 
+                      key={s._id}
+                      drag={isAttendanceMode && !isHolidayMode ? "y" : false}
+                      dragConstraints={{ top: 0, bottom: 0 }}
+                      onDragEnd={(_, info) => handleDragEnd(info, s._id)}
+                      className={`border-b transition-colors ${attendance[s._id] ? 'bg-slate-50/50' : 'hover:bg-slate-50/30'}`}
+                    >
+                      <td className="p-6 font-bold text-blue-600">#{s.srNo}</td>
+                      <td className="p-6 font-black text-slate-700 uppercase tracking-tight">{s.name}</td>
+                      <td className="p-6 text-right">
+                        <div className="flex justify-end items-center gap-3">
+                          {attendance[s._id] === 'H' ? (
+                            <span className="text-orange-600 text-[10px] font-black uppercase bg-orange-100 px-3 py-1 rounded-full">Holiday</span>
+                          ) : attendance[s._id] === 'P' ? (
+                            <span className="text-emerald-600 text-[10px] font-black uppercase bg-emerald-100 px-3 py-1 rounded-full">Present</span>
+                          ) : attendance[s._id] === 'A' ? (
+                            <span className="text-red-500 text-[10px] font-black uppercase bg-red-100 px-3 py-1 rounded-full">Absent</span>
+                          ) : (
+                            <span className="text-slate-300 text-[9px] font-black uppercase italic">Pending...</span>
+                          )}
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
           {loading && <div className="flex justify-center p-20"><Loader2 className="animate-spin text-blue-600" size={40} /></div>}
         </div>
       </div>
