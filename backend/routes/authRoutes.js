@@ -15,19 +15,20 @@ router.post("/register", async (req, res) => {
         const cleanContact = contact.trim();
 
         if (role === "student") {
-            // Check both possible field names in DB: 'mobile' and 'contact'
+            // Check both 'mobile' and 'contact' fields to prevent duplicates
             const existing = await Student.findOne({ 
                 $or: [{ mobile: cleanContact }, { contact: cleanContact }] 
             });
             
-            if (existing) return res.json({ success: false, message: "User already exists" });
+            if (existing) return res.json({ success: false, message: "User already exists with this number" });
 
             const newStudent = new Student({
                 name: name.trim(),
-                mobile: cleanContact, // Hum naye records 'mobile' field mein hi save karenge
+                mobile: cleanContact, 
                 dob: dob.trim(),
                 password: password || "123456",
-                course: course || null
+                // Agar course empty hai toh "General" set karein (Schema enum check ke liye)
+                course: course || "General" 
             });
             await newStudent.save();
             res.json({ success: true, message: "Student Registered Successfully" });
@@ -58,7 +59,7 @@ router.post("/login", async (req, res) => {
         const cleanDob = dob.trim();
 
         if (role === "student") {
-            // FIX: $or operator use kiya hai taaki agar DB mein 'contact' likha ho ya 'mobile', dono match ho jayein
+            // $or use kiya hai taaki 'SAAD' (contact field) aur naye students (mobile field) dono login ho sakein
             const user = await Student.findOne({ 
                 $or: [
                     { mobile: cleanContact }, 
@@ -68,7 +69,7 @@ router.post("/login", async (req, res) => {
             }); 
             
             if (!user) {
-                return res.json({ success: false, message: "Invalid Credentials. Check your details." });
+                return res.json({ success: false, message: "Invalid Credentials. Number or DOB mismatch." });
             }
             
             res.json({ success: true, message: "Login Successful", user });
