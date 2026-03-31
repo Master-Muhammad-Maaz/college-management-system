@@ -1,68 +1,88 @@
 "use client"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useState, Suspense } from "react"
-import { motion } from "framer-motion"
-import Link from "next/link" // Fixed: Imported from next/link
-import { UserPlus, Loader2, ArrowLeft, ShieldCheck } from "lucide-react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { UserPlus, Loader2 } from "lucide-react"
 
-function RegisterContent() {
+export default function StudentRegister() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const role = searchParams.get("role") || "student"
-
-  const [formData, setFormData] = useState({ name: "", contact: "", dob: "", email: "" })
+  const [formData, setFormData] = useState({
+    name: "",
+    contact: "",
+    dob: "",
+    email: ""
+  })
   const [loading, setLoading] = useState(false)
 
   const handleRegister = async (e: any) => {
     e.preventDefault()
     setLoading(true)
+
+    // Database mein shuru mein '0' save ho raha hai, wahi format maintain karein
+    const formattedContact = formData.contact.startsWith('0') ? formData.contact : `0${formData.contact}`;
+
     try {
-      const res = await fetch("https://college-management-system-ae1l.onrender.com/api/register", {
+      const res = await fetch("https://college-management-system-ae1l.onrender.com/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, role })
+        body: JSON.stringify({ 
+          name: formData.name,
+          contact: formattedContact, 
+          dob: formData.dob,
+          role: "student",
+          // FIX: Backend in fields ko 'required' maang raha hai
+          course: "General", 
+          password: "123" 
+        })
       })
+
       const data = await res.json()
-      if (res.ok && data.success) {
-        alert("Registration Successful!")
-        router.push(role === "admin" ? "/admin-login" : "/student-login")
-      } else { alert(data.message || "Registration failed.") }
-    } catch (error) { alert("Server error.") } finally { setLoading(false) }
+      if (data.success) {
+        alert("Registration Successful! Now you can Login.")
+        router.push("/student-login")
+      } else {
+        alert(`Error: ${data.message}`)
+      }
+    } catch (err) {
+      alert("Server connection failed. Try again in 1 minute.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white p-6">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[500px]">
-        <div className="flex flex-col items-center mb-10">
-          <div className="p-4 bg-blue-50 rounded-[25px] text-blue-600 mb-5 border border-blue-100 shadow-sm">
-            <UserPlus size={32} />
-          </div>
-          <h1 className="text-3xl font-[1000] text-[#0f172a] tracking-tighter uppercase">New {role}</h1>
-          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em] mt-2">Registration Protocol</p>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+      <div className="bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-md border border-slate-100">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-black uppercase tracking-tighter">New Student</h1>
+          <p className="text-[10px] font-bold text-slate-400 uppercase">Registration Protocol</p>
         </div>
-
-        <div className="bg-white p-10 rounded-[50px] border border-slate-100 shadow-2xl shadow-slate-200/50">
-          <form onSubmit={handleRegister} className="space-y-5">
-            <input type="text" placeholder="FULL NAME" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})} className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:border-blue-600 font-bold uppercase" required />
-            <input type="text" placeholder="CONTACT NUMBER" value={formData.contact} onChange={(e) => setFormData({...formData, contact: e.target.value})} className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:border-blue-600 font-bold" required />
-            <input type="email" placeholder="EMAIL ADDRESS" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:border-blue-600 font-bold" required />
-            <input type="date" value={formData.dob} onChange={(e) => setFormData({...formData, dob: e.target.value})} className="w-full p-5 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:border-blue-600 font-bold uppercase" required />
-            
-            <button type="submit" disabled={loading} className="w-full py-5 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center justify-center gap-2">
-              {loading ? <Loader2 className="animate-spin" size={18} /> : "Complete Registration"}
-            </button>
-          </form>
-          <div className="mt-8 pt-6 border-t border-slate-50 text-center">
-             <Link href={role === "admin" ? "/admin-login" : "/student-login"} className="text-slate-400 text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:text-blue-600 transition-colors">
-               <ArrowLeft size={12}/> Already Registered? Login
-             </Link>
-          </div>
-        </div>
-      </motion.div>
+        
+        <form onSubmit={handleRegister} className="space-y-4">
+          <input 
+            type="text" placeholder="FULL NAME" 
+            className="w-full p-4 rounded-2xl bg-slate-50 border outline-none font-bold"
+            onChange={(e) => setFormData({...formData, name: e.target.value})} required 
+          />
+          <input 
+            type="text" placeholder="MOBILE NUMBER" 
+            className="w-full p-4 rounded-2xl bg-slate-50 border outline-none font-bold"
+            onChange={(e) => setFormData({...formData, contact: e.target.value})} required 
+          />
+          <input 
+            type="email" placeholder="EMAIL ADDRESS" 
+            className="w-full p-4 rounded-2xl bg-slate-50 border outline-none font-bold"
+            onChange={(e) => setFormData({...formData, email: e.target.value})} required 
+          />
+          <input 
+            type="date" 
+            className="w-full p-4 rounded-2xl bg-slate-50 border outline-none font-bold"
+            onChange={(e) => setFormData({...formData, dob: e.target.value})} required 
+          />
+          <button type="submit" disabled={loading} className="w-full py-4 rounded-2xl bg-blue-600 text-white font-black uppercase tracking-widest transition-all">
+            {loading ? <Loader2 className="animate-spin mx-auto" size={24} /> : "Complete Registration"}
+          </button>
+        </form>
+      </div>
     </div>
   )
-}
-
-export default function Register() {
-  return <Suspense fallback={null}><RegisterContent /></Suspense>
 }
