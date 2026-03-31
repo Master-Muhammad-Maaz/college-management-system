@@ -12,16 +12,19 @@ router.post("/register", async (req, res) => {
             return res.status(400).json({ success: false, message: "Required fields missing" });
         }
 
-        // String clean karne ke liye (Spaces hatane ke liye)
         const cleanContact = contact.trim();
 
         if (role === "student") {
-            const existing = await Student.findOne({ mobile: cleanContact });
-            if (existing) return res.json({ success: false, message: "User already exists with this mobile number" });
+            // Check both possible field names in DB: 'mobile' and 'contact'
+            const existing = await Student.findOne({ 
+                $or: [{ mobile: cleanContact }, { contact: cleanContact }] 
+            });
+            
+            if (existing) return res.json({ success: false, message: "User already exists" });
 
             const newStudent = new Student({
                 name: name.trim(),
-                mobile: cleanContact, 
+                mobile: cleanContact, // Hum naye records 'mobile' field mein hi save karenge
                 dob: dob.trim(),
                 password: password || "123456",
                 course: course || null
@@ -42,7 +45,7 @@ router.post("/register", async (req, res) => {
     }
 });
 
-// 2. LOGIN
+// 2. LOGIN (FIXED FOR FIELD MISMATCH)
 router.post("/login", async (req, res) => {
     try {
         const { contact, dob, role } = req.body;
@@ -55,11 +58,17 @@ router.post("/login", async (req, res) => {
         const cleanDob = dob.trim();
 
         if (role === "student") {
-            // Mobile aur DOB dono match hone chahiye
-            const user = await Student.findOne({ mobile: cleanContact, dob: cleanDob }); 
+            // FIX: $or operator use kiya hai taaki agar DB mein 'contact' likha ho ya 'mobile', dono match ho jayein
+            const user = await Student.findOne({ 
+                $or: [
+                    { mobile: cleanContact }, 
+                    { contact: cleanContact }
+                ], 
+                dob: cleanDob 
+            }); 
             
             if (!user) {
-                return res.json({ success: false, message: "Invalid Credentials. Please check Mobile/DOB." });
+                return res.json({ success: false, message: "Invalid Credentials. Check your details." });
             }
             
             res.json({ success: true, message: "Login Successful", user });
