@@ -13,9 +13,9 @@ export default function StudentLogin() {
     e.preventDefault()
     setLoading(true)
 
-    // 1. Trim spaces and handle '0' prefix
+    // FIX: Bina '0' add kiye simple trim karo
+    // Kyunki aapke DB screenshot mein numbers 8262 se shuru ho rahe hain, 08262 se nahi.
     const cleanContact = contact.trim()
-    const formattedContact = cleanContact.startsWith('0') ? cleanContact : `0${cleanContact}`
 
     try {
       const res = await fetch("https://college-management-system-ae1l.onrender.com/api/auth/login", {
@@ -24,8 +24,8 @@ export default function StudentLogin() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          contact: formattedContact,
-          dob: dob.trim(), // Trim DOB as well
+          contact: cleanContact, // Seedha clean number bhejo
+          dob: dob,             // HTML date picker 'YYYY-MM-DD' hi bhejta hai jo DB se match karega
           role: "student"
         })
       })
@@ -33,12 +33,11 @@ export default function StudentLogin() {
       const data = await res.json()
 
       if (data.success) {
-        // Data save karne se pehle purana clear kar dena behtar hai
         localStorage.removeItem("studentData")
         localStorage.setItem("studentData", JSON.stringify(data.user))
         router.push("/student-dashboard")
       } else {
-        // Detailed error message taaki aapko pata chale masla kya hai
+        // Detailed message taaki pata chale ke Number galat hai ya DOB
         alert(`Login Failed: ${data.message}`)
       }
     } catch (err) {
@@ -66,7 +65,9 @@ export default function StudentLogin() {
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="text-[10px] font-bold text-slate-500 ml-2 uppercase">Mobile Number</label>
+            <label className="text-[10px] font-bold text-slate-500 ml-2 uppercase">
+              Mobile Number (Bina 0 ke)
+            </label>
             <input
               type="text"
               placeholder="e.g. 8262006648"
@@ -78,7 +79,9 @@ export default function StudentLogin() {
           </div>
 
           <div>
-            <label className="text-[10px] font-bold text-slate-500 ml-2 uppercase">Date of Birth</label>
+            <label className="text-[10px] font-bold text-slate-500 ml-2 uppercase">
+              Date of Birth
+            </label>
             <input
               type="date"
               value={dob}
