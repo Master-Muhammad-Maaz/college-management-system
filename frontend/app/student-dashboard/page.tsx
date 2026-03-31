@@ -1,28 +1,31 @@
 "use client"
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { BookOpen, Calendar, FileText, LayoutDashboard, LogOut, User } from "lucide-react"
+import { BookOpen, Calendar, FileText, LayoutDashboard, LogOut, User, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export default function StudentDashboard() {
   const router = useRouter()
   const [student, setStudent] = useState<any>(null)
+  const [isVerifying, setIsVerifying] = useState(true)
 
   useEffect(() => {
-    // FIX: Consistent key usage 'studentData' to match login storage
+    // FIX: Match the key 'studentData' with Login Page
     const data = localStorage.getItem("studentData")
     
     if (!data || data === "undefined") {
       router.push("/student-login")
     } else {
       try {
-        setStudent(JSON.parse(data))
+        const parsedData = JSON.parse(data)
+        setStudent(parsedData)
       } catch (e) {
         console.error("Session Error:", e)
-        localStorage.clear()
+        localStorage.removeItem("studentData")
         router.push("/student-login")
       }
     }
+    setIsVerifying(false)
   }, [router])
 
   const handleLogout = () => {
@@ -31,10 +34,11 @@ export default function StudentDashboard() {
   }
 
   // Loading state while checking auth
-  if (!student) return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="animate-pulse text-sm font-black uppercase tracking-widest text-slate-400">
-        Verifying Session...
+  if (isVerifying || !student) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+      <Loader2 className="animate-spin text-blue-600 mb-4" size={32} />
+      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+        Verifying Secure Session...
       </div>
     </div>
   )
@@ -56,9 +60,10 @@ export default function StudentDashboard() {
           </div>
           <button 
             onClick={handleLogout} 
-            className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all shadow-sm"
+            className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all shadow-sm border border-red-100 group"
+            title="Logout Session"
           >
-            <LogOut size={20} />
+            <LogOut size={20} className="group-active:scale-90 transition-transform" />
           </button>
         </div>
 
@@ -73,14 +78,14 @@ export default function StudentDashboard() {
           </div>
           <div className="text-center md:text-left">
             <h2 className="text-3xl font-black text-[#0f172a] uppercase tracking-tighter">
-              {student.name}
+              {student.name || "Student Name"}
             </h2>
             <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4">
-              <span className="px-5 py-2 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest">
-                {student.course || "M.Sc. Computer Science"}
+              <span className="px-5 py-2 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-200">
+                {student.course || "General Student"}
               </span>
               <span className="px-5 py-2 bg-white text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-200">
-                Roll No: {student.srNo || "N/A"}
+                Contact: {student.mobile || student.contact || "N/A"}
               </span>
             </div>
           </div>
@@ -89,22 +94,29 @@ export default function StudentDashboard() {
         {/* ACTION GRID */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { icon: <BookOpen size={24} />, title: "Assignments", desc: "Access shared resources.", color: "blue" },
-            { icon: <Calendar size={24} />, title: "Attendance", desc: "Check monthly report.", color: "emerald" },
-            { icon: <FileText size={24} />, title: "Internal Marks", desc: "View assessment results.", color: "orange" }
+            { icon: <BookOpen size={24} />, title: "Assignments", desc: "Access shared resources.", color: "bg-blue-50 text-blue-600" },
+            { icon: <Calendar size={24} />, title: "Attendance", desc: "Check monthly report.", color: "bg-emerald-50 text-emerald-600" },
+            { icon: <FileText size={24} />, title: "Internal Marks", desc: "View assessment results.", color: "bg-orange-50 text-orange-600" }
           ].map((item, idx) => (
             <motion.div 
               key={idx}
               whileHover={{ y: -5 }}
               className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-100/50 group hover:border-blue-200 transition-all cursor-pointer"
             >
-               <div className={`p-4 bg-${item.color}-50 text-${item.color}-600 w-fit rounded-2xl mb-6 group-hover:bg-${item.color}-600 group-hover:text-white transition-all`}>
+               <div className={`p-4 ${item.color} w-fit rounded-2xl mb-6 transition-all`}>
                  {item.icon}
                </div>
                <h3 className="text-sm font-black uppercase tracking-widest text-[#0f172a]">{item.title}</h3>
                <p className="text-xs text-slate-400 mt-2 font-medium">{item.desc}</p>
             </motion.div>
           ))}
+        </div>
+
+        {/* FOOTER INFO */}
+        <div className="mt-12 text-center">
+          <p className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.3em]">
+            College Management System &copy; 2026
+          </p>
         </div>
 
       </div>
