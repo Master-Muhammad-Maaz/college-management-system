@@ -12,7 +12,7 @@ const assignmentRoutes = require("./routes/assignments");
 
 const app = express();
 
-// 1. CORS CONFIGURATION (Updated for flexibility)
+// 1. CORS CONFIGURATION
 const allowedOrigins = [
   "http://localhost:3000", 
   "https://college-management-system123.vercel.app",
@@ -22,7 +22,7 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Vercel ke subdomains aur local ko allow karne ke liye
+    // Vercel subdomains check
     if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
       callback(null, true);
     } else {
@@ -36,7 +36,7 @@ app.use(cors({
 // 2. Middleware
 app.use(express.json());
 
-// STATIC FOLDERS setup
+// STATIC FOLDERS (Render writable directory setup)
 const uploadDirs = [
   path.join(__dirname, 'uploads'),
   path.join(__dirname, 'uploads', 'assignments')
@@ -53,17 +53,15 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const MONGO_URI = process.env.MONGODB_URI || "mongodb+srv://mohammadmaaz8262:87654321@maaz123.eu2rnw5.mongodb.net/college_db?retryWrites=true&w=majority";
 
 mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log("✅ MongoDB Connected Successfully");
-  })
-  .catch(err => {
-    console.error("❌ MongoDB Connection Error:", err.message);
-  });
+  .then(() => console.log("✅ MongoDB Connected Successfully"))
+  .catch(err => console.error("❌ MongoDB Connection Error:", err.message));
 
-// 4. API Routes (FIXED PATHS TO MATCH FRONTEND)
-app.get("/", (req, res) => res.send("College Management System API is active."));
+// 4. API Routes (MATCHING FRONTEND PATHS)
+// Ye route '/' par "Not Found" ko fix karega
+app.get("/", (req, res) => {
+    res.status(200).send("College Management System API is active.");
+});
 
-// frontend 'api/auth/login' use kar raha hai isliye yahan /api/auth hona chahiye
 app.use("/api/auth", authRoutes); 
 app.use("/api/students", studentRoutes); 
 app.use("/api/attendance", attendanceRoutes);
@@ -76,9 +74,9 @@ app.use((err, req, res, next) => {
 });
 
 /**
- * FINAL PORT BINDING
+ * PORT BINDING
  */
-const PORT = process.env.PORT || 10000; // Render usually uses 10000
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server is live on port: ${PORT}`);
 });
