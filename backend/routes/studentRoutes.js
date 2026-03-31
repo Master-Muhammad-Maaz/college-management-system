@@ -5,14 +5,15 @@ const multer = require("multer");
 const fs = require("fs"); 
 const StudentRecord = require("../models/StudentRecord");
 
+// Multer storage setup (Render writable folder)
 const upload = multer({ dest: "uploads/" });
 
-// 1. ADD SINGLE STUDENT (Fixes "Add Student" Error)
+// 1. ADD SINGLE STUDENT
 router.post("/add", async (req, res) => {
   try {
     const { srNo, name, course, mobile, dob } = req.body;
     if (!srNo || !name || !course) {
-      return res.status(400).json({ success: false, message: "Missing required fields." });
+      return res.status(400).json({ success: false, message: "Sr No, Name and Course are required." });
     }
 
     const existing = await StudentRecord.findOne({ srNo, course });
@@ -28,7 +29,7 @@ router.post("/add", async (req, res) => {
   }
 });
 
-// 2. CLEAR BATCH (Fixes "Clear Batch" Error)
+// 2. CLEAR BATCH (PIN: 1234)
 router.post("/clear-batch", async (req, res) => {
   try {
     const { course, pincode } = req.body;
@@ -41,7 +42,7 @@ router.post("/clear-batch", async (req, res) => {
   }
 });
 
-// 3. BULK IMPORT (EXCEL)
+// 3. BULK IMPORT (EXCEL) - FIXED LOGIC
 router.post("/import-excel", upload.single("file"), async (req, res) => {
   try {
     const { fallbackCourse } = req.body; 
@@ -51,48 +52,60 @@ router.post("/import-excel", upload.single("file"), async (req, res) => {
     await workbook.xlsx.readFile(req.file.path);
     const worksheet = workbook.getWorksheet(1);
     const studentsData = [];
-    let headerMap = {};
+    let headerMap = { srNo: 1, name: 2, course: 3, mobile: 4, dob: 5 }; // Default columns
 
     worksheet.eachRow((row, rowNumber) => {
       if (rowNumber === 1) {
+        // Dynamic Header Detection
         row.eachCell((cell, colNumber) => {
-          const header = cell.value?.toString().toLowerCase().trim();
-          if (header.includes("sr")) headerMap.srNo = colNumber;
+          const header = cell.value?.toString().toLowerCase().trim() || "";
+          if (header.includes("sr") || header.includes("roll")) headerMap.srNo = colNumber;
           if (header.includes("name")) headerMap.name = colNumber;
           if (header.includes("course") || header.includes("class")) headerMap.course = colNumber;
-          if (header.includes("mobile")) headerMap.mobile = colNumber;
-          if (header.includes("dob")) headerMap.dob = colNumber;
+          if (header.includes("mobile") || header.includes("contact")) headerMap.mobile = colNumber;
+          if (header.includes("dob") || header.includes("birth")) headerMap.dob = colNumber;
         });
       } else {
-        const srNo = row.getCell(headerMap.srNo || 1).value;
-        const name = row.getCell(headerMap.name || 2).value?.toString().trim();
-        const course = row.getCell(headerMap.course).value?.toString().trim() || fallbackCourse;
+        const srNoRaw = row.getCell(headerMap.srNo).value;
+        const nameRaw = row.getCell(headerMap.name).value;
+        
+        if (srNoRaw && nameRaw) {
+          // Date formatting handle karna zaroori hai
+          let dobValue = row.getCell(headerMap.dob).value;
+          if (dobValue instanceof Date) {
+            dobValue = dobValue.toISOString().split('T')[0];
+          }
 
-        if (srNo && name && course) {
           studentsData.push({
-            srNo: parseInt(srNo),
-            name,
-            course,
-            mobile: row.getCell(headerMap.mobile || 3).value?.toString() || "N/A",
-            dob: row.getCell(headerMap.dob || 4).value?.toString() || "N/A"
+            srNo: parseInt(srNoRaw),
+            name: nameRaw.toString().trim(),
+            course: row.getCell(headerMap.course).value?.toString().trim() || fallbackCourse || "General",
+            mobile: row.getCell(headerMap.mobile).value?.toString() || "N/A",
+            dob: dobValue?.toString() || "N/A"
           });
         }
       }
     });
 
-    for (const data of studentsData) {
-      await StudentRecord.findOneAndUpdate(
-        { srNo: data.srNo, course: data.course },
-        data,
-        { upsert: true }
-      );
+    // Bulk Upsert Operations
+    const operations = studentsData.map(data => ({
+      updateOne: {
+        filter: { srNo: data.srNo, course: data.course },
+        update: { $set: data },
+        upsert: true
+      }
+    }));
+
+    if (operations.length > 0) {
+      await StudentRecord.bulkWrite(operations);
     }
 
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    res.json({ success: true, message: `Imported ${studentsData.length} students.` });
+    res.json({ success: true, message: `Successfully imported/updated ${studentsData.length} students.` });
+
   } catch (error) {
     if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: "Import Error: " + error.message });
   }
 });
 
@@ -100,7 +113,8 @@ router.post("/import-excel", upload.single("file"), async (req, res) => {
 router.get("/list", async (req, res) => {
   try {
     const { course } = req.query;
-    const students = await StudentRecord.find(course ? { course } : {}).sort({ srNo: 1 });
+    const filter = course ? { course: new RegExp(course, 'i') } : {};
+    const students = await StudentRecord.find(filter).sort({ srNo: 1 });
     res.json({ success: true, students });
   } catch (err) {
     res.status(500).json({ success: false, message: "Load failed." });
