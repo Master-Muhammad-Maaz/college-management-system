@@ -15,38 +15,40 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// 🚀 1. DRIVE CONTENT ROUTER (Root aur Nested dono handle karega)
+// 🚀 1. GET CONTENT (Root aur Nested dono handle karega)
 router.get('/content/:course/:folderId', async (req, res) => {
     try {
         const { course, folderId } = req.params;
         
-        // Agar Frontend se "root" aaye, toh null (top-level) search karo
-        const queryParentId = (folderId === "root" || folderId === "null" || !folderId) ? null : folderId;
+        // Logic: Agar frontend se "root" ya "null" string aaye, toh use null (top-level) treat karein
+        const queryParentId = (folderId === "root" || folderId === "null" || !folderId || folderId === "undefined") ? null : folderId;
 
         const folders = await Folder.find({ course, parentId: queryParentId }).sort({ createdAt: -1 });
         const files = await Assignment.find({ course, folderId: queryParentId }).sort({ createdAt: -1 });
 
         res.json({ success: true, folders, files });
     } catch (err) {
+        console.error("Fetch Error:", err.message);
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// 🚀 2. CREATE FOLDER (ParentId support ke saath)
+// 🚀 2. CREATE FOLDER
 router.post('/create-folder', async (req, res) => {
     try {
         const { name, course, parentId } = req.body;
-        if (!name) return res.status(400).json({ success: false, message: "Name required" });
+        if (!name) return res.status(400).json({ success: false, message: "Folder name is required" });
 
         const newFolder = new Folder({ 
             name, 
             course, 
-            parentId: parentId || null 
+            parentId: (parentId === "root" || !parentId) ? null : parentId 
         });
 
         await newFolder.save();
         res.status(200).json({ success: true, folder: newFolder });
     } catch (err) {
+        console.error("Create Folder Error:", err.message);
         res.status(500).json({ success: false, error: err.message });
     }
 });
@@ -55,15 +57,25 @@ router.post('/create-folder', async (req, res) => {
 router.post('/add', upload.single('file'), async (req, res) => {
     try {
         const { fileName, teacherName, course, folderId } = req.body;
+        
+        if (!req.file) return res.status(400).json({ success: false, message: "No file uploaded" });
+
         const newFile = new Assignment({
-            fileName, teacherName, course,
-            folderId: folderId || null,
+            fileName: fileName || req.file.originalname, 
+            teacherName, 
+            course,
+            folderId: (folderId === "root" || !folderId) ? null : folderId,
             fileUrl: req.file.filename,
             type: 'file'
         });
+
         await newFile.save();
-        res.json({ success: true });
-    } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+        res.json({ success: true, message: "File uploaded successfully" });
+    } catch (err) { 
+        console.error("Upload Error:", err.message);
+        res.status(500).json({ success: false, error: err.message }); 
+    }
 });
 
+// IMPORTANT: Exports router to prevent SyntaxError in server.js
 module.exports = router;
