@@ -1,41 +1,10 @@
 const Student = require("../models/Student");
+const Admin = require("../models/Admin");
 
-// 1. REGISTER STUDENT
-exports.registerStudent = async (req, res) => {
+// 1. LOGIN (Student aur Admin dono ke liye)
+exports.login = async (req, res) => {
   try {
-    const { name, contact, dob, course, password } = req.body;
-
-    if (!name || !contact || !dob || !course) {
-      return res.status(400).json({ error: "All fields are mandatory" });
-    }
-
-    const cleanContact = contact.trim();
-    const cleanDob = dob.trim();
-
-    const student = new Student({
-      name: name.trim(),
-      mobile: cleanContact, // Naye records mobile field mein jayenge
-      contact: cleanContact, // Back-compatibility ke liye contact mein bhi daal dete hain
-      dob: cleanDob,
-      password: password || "123456",
-      course
-    });
-
-    await student.save();
-    res.json({ success: true, message: "Registration successful" });
-
-  } catch (error) {
-    if (error.code === 11000) {
-      return res.status(400).json({ error: "This mobile number is already registered." });
-    }
-    res.status(500).json({ error: error.message });
-  }
-};
-
-// 2. LOGIN STUDENT (Using Mobile & DOB)
-exports.loginStudent = async (req, res) => {
-  try {
-    const { contact, dob } = req.body; // Frontend se 'contact' aur 'dob' aa raha hai
+    const { contact, dob, role } = req.body;
 
     if (!contact || !dob) {
       return res.status(400).json({ success: false, message: "Mobile and DOB are required" });
@@ -44,7 +13,16 @@ exports.loginStudent = async (req, res) => {
     const cleanContact = contact.trim();
     const cleanDob = dob.trim();
 
-    // Password ki jagah DOB se match karenge aur dono fields (mobile/contact) check karenge
+    // AGAR ADMIN LOGIN KAR RAHA HAI
+    if (role === "admin") {
+      const admin = await Admin.findOne({ contact: cleanContact, dob: cleanDob });
+      if (!admin) {
+        return res.json({ success: false, message: "Invalid Admin Credentials" });
+      }
+      return res.json({ success: true, message: "Admin Login Successful", user: admin });
+    }
+
+    // AGAR STUDENT LOGIN KAR RAHA HAI (Wahi logic jo Success hua tha)
     const student = await Student.findOne({
       $or: [
         { mobile: cleanContact },
@@ -63,10 +41,45 @@ exports.loginStudent = async (req, res) => {
     res.json({ 
       success: true,
       message: "Login success",
-      user: student // Frontend 'user' expect kar raha hai
+      user: student 
     });
 
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, message: "Server error: " + error.message });
+  }
+};
+
+// 2. REGISTER (Admin aur Student dono handle karega)
+exports.register = async (req, res) => {
+  try {
+    const { name, contact, dob, role, course, password } = req.body;
+
+    if (!name || !contact || !dob || !role) {
+      return res.status(400).json({ success: false, message: "Missing fields" });
+    }
+
+    const cleanContact = contact.trim();
+    const cleanDob = dob.trim();
+
+    if (role === "admin") {
+      const newAdmin = new Admin({ name: name.trim(), contact: cleanContact, dob: cleanDob });
+      await newAdmin.save();
+      return res.json({ success: true, message: "Admin Registered" });
+    }
+
+    const newStudent = new Student({
+      name: name.trim(),
+      mobile: cleanContact,
+      contact: cleanContact,
+      dob: cleanDob,
+      password: password || "123456",
+      course: course || "General"
+    });
+
+    await newStudent.save();
+    res.json({ success: true, message: "Student Registered" });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
