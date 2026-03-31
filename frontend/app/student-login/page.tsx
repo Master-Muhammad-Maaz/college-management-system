@@ -15,7 +15,7 @@ export default function StudentLogin() {
     e.preventDefault()
     setLoading(true)
     try {
-      // Backend Render URL
+      // FIX: Ensure the URL matches your live Render service
       const API_BASE_URL = "https://college-management-system-ae11.onrender.com";
       
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -28,18 +28,26 @@ export default function StudentLogin() {
         })
       })
 
+      // Check if response is okay
+      if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Login failed");
+      }
+
       const data = await res.json()
 
       if (data.success) {
-        // Dashboard 'studentData' key dhoond raha hai, wahi use kar rahe hain
+        // Syncing with dashboard's expected key
         localStorage.setItem("studentData", JSON.stringify(data.user));
         router.push("/student-dashboard") 
       } else {
-        alert(data.message || "Invalid credentials. Please check Contact and DOB.")
+        alert(data.message || "Invalid credentials")
       }
-    } catch (err) {
-      console.error("Login Error:", err)
-      alert("Server connection failed. Please check if backend is awake.")
+    } catch (err: any) {
+      console.error("Connection Error:", err)
+      alert(err.message === "Failed to fetch" 
+        ? "Server connection failed. Please check if backend is awake." 
+        : err.message);
     } finally {
       setLoading(false)
     }
