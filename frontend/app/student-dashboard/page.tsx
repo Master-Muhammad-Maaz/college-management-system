@@ -1,7 +1,16 @@
 "use client"
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { BookOpen, Calendar, FileText, LayoutDashboard, LogOut, User, Loader2 } from "lucide-react"
+import { 
+  BookOpen, 
+  Calendar, 
+  FileText, 
+  LayoutDashboard, 
+  LogOut, 
+  User, 
+  Loader2, 
+  FolderIcon // Naya icon notes ke liye
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export default function StudentDashboard() {
@@ -10,7 +19,7 @@ export default function StudentDashboard() {
   const [isVerifying, setIsVerifying] = useState(true)
 
   useEffect(() => {
-    // FIX: Match the key 'studentData' with Login Page
+    // Session check logic (No changes here)
     const data = localStorage.getItem("studentData")
     
     if (!data || data === "undefined") {
@@ -33,7 +42,7 @@ export default function StudentDashboard() {
     router.push("/student-login")
   }
 
-  // Loading state while checking auth
+  // Loading state
   if (isVerifying || !student) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white">
       <Loader2 className="animate-spin text-blue-600 mb-4" size={32} />
@@ -91,16 +100,42 @@ export default function StudentDashboard() {
           </div>
         </motion.div>
 
-        {/* ACTION GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* ACTION GRID - UPDATED TO 4 COLUMNS */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { icon: <BookOpen size={24} />, title: "Assignments", desc: "Access shared resources.", color: "bg-blue-50 text-blue-600" },
-            { icon: <Calendar size={24} />, title: "Attendance", desc: "Check monthly report.", color: "bg-emerald-50 text-emerald-600" },
-            { icon: <FileText size={24} />, title: "Internal Marks", desc: "View assessment results.", color: "bg-orange-50 text-orange-600" }
+            { 
+              icon: <BookOpen size={24} />, 
+              title: "Assignments", 
+              desc: "Access shared resources.", 
+              color: "bg-blue-50 text-blue-600",
+              link: "/student/assignments" 
+            },
+            { 
+              icon: <FolderIcon size={24} />, 
+              title: "Digital Notes", 
+              desc: "View study materials.", 
+              color: "bg-indigo-50 text-indigo-600", // Alag color pehchan ke liye
+              link: "/student/notes" 
+            },
+            { 
+              icon: <Calendar size={24} />, 
+              title: "Attendance", 
+              desc: "Check monthly report.", 
+              color: "bg-emerald-50 text-emerald-600",
+              link: "/student/attendance" 
+            },
+            { 
+              icon: <FileText size={24} />, 
+              title: "Internal Marks", 
+              desc: "View assessment results.", 
+              color: "bg-orange-50 text-orange-600",
+              link: "/student/marks" 
+            }
           ].map((item, idx) => (
             <motion.div 
               key={idx}
               whileHover={{ y: -5 }}
+              onClick={() => router.push(item.link)}
               className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-100/50 group hover:border-blue-200 transition-all cursor-pointer"
             >
                <div className={`p-4 ${item.color} w-fit rounded-2xl mb-6 transition-all`}>
