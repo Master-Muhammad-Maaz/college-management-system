@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const AttendanceSchema = new mongoose.Schema({
   studentId: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: "StudentRecord", 
+    ref: "StudentRecord", // Ensure this matches your Student model name
     required: true 
   },
   date: { type: String, required: true }, // Format: YYYY-MM-DD
@@ -19,7 +19,7 @@ const AttendanceSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Indexing for unique daily entry
+// Indexing for unique daily entry - prevent duplicate attendance for same student on same day
 AttendanceSchema.index({ studentId: 1, date: 1 }, { unique: true });
 
 module.exports = mongoose.model("Attendance", AttendanceSchema);
