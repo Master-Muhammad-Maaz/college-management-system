@@ -3,6 +3,7 @@ const router = express.Router();
 const Admin = require("../models/Admin");
 const Student = require("../models/Student");
 
+// 1. REGISTER ROUTE
 router.post("/register", async (req, res) => {
     try {
         const { name, contact, dob, role, course, password } = req.body;
@@ -12,8 +13,10 @@ router.post("/register", async (req, res) => {
         }
 
         const cleanContact = contact.trim();
+        const cleanDob = dob.trim(); // Ensure date is clean
 
         if (role === "student") {
+            // Check if user already exists
             const existing = await Student.findOne({
                 $or: [{ mobile: cleanContact }, { contact: cleanContact }]
             });
@@ -25,23 +28,21 @@ router.post("/register", async (req, res) => {
             const newStudent = new Student({
                 name: name.trim(),
                 mobile: cleanContact,
-                dob: dob.trim(),
+                dob: cleanDob, // Stores as 'YYYY-MM-DD'
                 password: password || "123456",
                 course: course || "General"
             });
 
             await newStudent.save();
-
             res.json({ success: true, message: "Student Registered Successfully" });
         } else {
             const newAdmin = new Admin({
                 name: name.trim(),
                 contact: cleanContact,
-                dob: dob.trim()
+                dob: cleanDob
             });
 
             await newAdmin.save();
-
             res.json({ success: true, message: "Admin Registered Successfully" });
         }
     } catch (err) {
@@ -49,6 +50,7 @@ router.post("/register", async (req, res) => {
     }
 });
 
+// 2. LOGIN ROUTE (Match with YYYY-MM-DD)
 router.post("/login", async (req, res) => {
     try {
         const { contact, dob, role } = req.body;
@@ -61,6 +63,7 @@ router.post("/login", async (req, res) => {
         const cleanDob = dob.trim();
 
         if (role === "student") {
+            // Checks both field possibilities and matches exact DOB string
             const user = await Student.findOne({
                 $or: [
                     { mobile: cleanContact },
@@ -70,7 +73,10 @@ router.post("/login", async (req, res) => {
             });
 
             if (!user) {
-                return res.json({ success: false, message: "Invalid Credentials. Number or DOB mismatch." });
+                return res.json({ 
+                    success: false, 
+                    message: "Invalid Credentials. Use YYYY-MM-DD format (e.g., 2003-09-09)" 
+                });
             }
 
             res.json({ success: true, message: "Login Successful", user });
