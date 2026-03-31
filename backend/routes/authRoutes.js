@@ -3,7 +3,7 @@ const router = express.Router();
 const Admin = require("../models/Admin");
 const Student = require("../models/Student");
 
-// 1. REGISTER ROUTE
+// 1. REGISTER ROUTE (Student & Admin)
 router.post("/register", async (req, res) => {
     try {
         const { name, contact, dob, role, course, password } = req.body;
@@ -13,10 +13,10 @@ router.post("/register", async (req, res) => {
         }
 
         const cleanContact = contact.trim();
-        const cleanDob = dob.trim(); // Ensure date is clean
+        const cleanDob = dob.trim(); 
 
         if (role === "student") {
-            // Check if user already exists
+            // Check if student already exists
             const existing = await Student.findOne({
                 $or: [{ mobile: cleanContact }, { contact: cleanContact }]
             });
@@ -28,7 +28,8 @@ router.post("/register", async (req, res) => {
             const newStudent = new Student({
                 name: name.trim(),
                 mobile: cleanContact,
-                dob: cleanDob, // Stores as 'YYYY-MM-DD'
+                contact: cleanContact, // Saving in both for safety
+                dob: cleanDob, 
                 password: password || "123456",
                 course: course || "General"
             });
@@ -36,6 +37,12 @@ router.post("/register", async (req, res) => {
             await newStudent.save();
             res.json({ success: true, message: "Student Registered Successfully" });
         } else {
+            // Admin Registration
+            const existingAdmin = await Admin.findOne({ contact: cleanContact });
+            if (existingAdmin) {
+                return res.json({ success: false, message: "Admin already exists with this number" });
+            }
+
             const newAdmin = new Admin({
                 name: name.trim(),
                 contact: cleanContact,
@@ -50,7 +57,7 @@ router.post("/register", async (req, res) => {
     }
 });
 
-// 2. LOGIN ROUTE (Match with YYYY-MM-DD)
+// 2. LOGIN ROUTE (Dono Roles ke liye Fixed Logic)
 router.post("/login", async (req, res) => {
     try {
         const { contact, dob, role } = req.body;
@@ -63,7 +70,7 @@ router.post("/login", async (req, res) => {
         const cleanDob = dob.trim();
 
         if (role === "student") {
-            // Checks both field possibilities and matches exact DOB string
+            // Wahi logic jo success hua tha
             const user = await Student.findOne({
                 $or: [
                     { mobile: cleanContact },
@@ -81,13 +88,17 @@ router.post("/login", async (req, res) => {
 
             res.json({ success: true, message: "Login Successful", user });
         } else {
+            // Admin Login Logic
             const user = await Admin.findOne({
                 contact: cleanContact,
                 dob: cleanDob
             });
 
             if (!user) {
-                return res.json({ success: false, message: "Invalid Admin Credentials" });
+                return res.json({ 
+                    success: false, 
+                    message: "Invalid Admin Credentials. Check Number and DOB (YYYY-MM-DD)." 
+                });
             }
 
             res.json({ success: true, message: "Admin Login Successful", user });
