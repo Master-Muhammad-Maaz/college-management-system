@@ -5,7 +5,7 @@ const Student = require("../models/Student");
 const Folder = require("../models/Folder");
 const File = require("../models/File");
 
-// 1. REGISTER
+// 1. REGISTER (Updated: Course and Password are now optional)
 router.post("/register", async (req, res) => {
     try {
         const { name, contact, dob, role, course, password } = req.body;
@@ -16,20 +16,16 @@ router.post("/register", async (req, res) => {
         }
 
         if (role === "student") {
-            // Student ke liye extra validation jo aapne schema mein rakhi hai
-            if (!course || !password) {
-                return res.status(400).json({ success: false, message: "Course and Password are required for students" });
-            }
-
             const existingStudent = await Student.findOne({ mobile: contact });
             if (existingStudent) return res.json({ success: false, message: "Student already exists" });
 
+            // Naya student create karein, agar course/password nahi hai toh default use hoga
             const newStudent = new Student({
                 name,
-                mobile: contact, // Schema mein 'mobile' hai, frontend se 'contact' aa raha hai
+                mobile: contact, 
                 dob,
-                password,
-                course // Must be one of: ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II"]
+                password: password || "123456", // Default password
+                course: course || null // Course ab optional hai
             });
 
             await newStudent.save();
@@ -46,12 +42,11 @@ router.post("/register", async (req, res) => {
         }
 
     } catch (err) {
-        // Agar enum match nahi hua (e.g. B.Sc-1 bhej diya) toh ye error pakdega
         res.status(500).json({ success: false, message: "Database Error: " + err.message });
     }
 });
 
-// 2. LOGIN (Ensure mapping is correct)
+// 2. LOGIN
 router.post("/login", async (req, res) => {
     try {
         const { contact, dob, role } = req.body;
@@ -70,7 +65,7 @@ router.post("/login", async (req, res) => {
     }
 });
 
-// 3. FOLDERS & FILES (Same as before)
+// 3. FOLDERS & FILES
 router.post("/create-folder", async (req, res) => {
     try {
         const { name, parentId } = req.body;
