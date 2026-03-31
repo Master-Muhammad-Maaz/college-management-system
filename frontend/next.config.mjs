@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  reactStrictMode: true,
+  // Agar aap images use kar rahe hain toh yahan domain add kar sakte hain
 };
 
 export default nextConfig;
