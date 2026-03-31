@@ -9,6 +9,7 @@ const authRoutes = require("./routes/authRoutes");
 const studentRoutes = require("./routes/studentRoutes"); 
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const assignmentRoutes = require("./routes/assignments"); 
+const repoRoutes = require("./routes/repoRoutes"); // <-- [ZAROORI] Ise add kiya
 
 const app = express();
 
@@ -22,7 +23,6 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Vercel subdomains check
     if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
       callback(null, true);
     } else {
@@ -36,10 +36,11 @@ app.use(cors({
 // 2. Middleware
 app.use(express.json());
 
-// STATIC FOLDERS (Render writable directory setup)
+// STATIC FOLDERS SETUP
 const uploadDirs = [
   path.join(__dirname, 'uploads'),
-  path.join(__dirname, 'uploads', 'assignments')
+  path.join(__dirname, 'uploads', 'assignments'),
+  path.join(__dirname, 'uploads', 'repository') // <-- [ZAROORI] Ise add kiya
 ];
 
 uploadDirs.forEach(dir => {
@@ -56,8 +57,7 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected Successfully"))
   .catch(err => console.error("❌ MongoDB Connection Error:", err.message));
 
-// 4. API Routes (MATCHING FRONTEND PATHS)
-// Ye route '/' par "Not Found" ko fix karega
+// 4. API Routes
 app.get("/", (req, res) => {
     res.status(200).send("College Management System API is active.");
 });
@@ -66,6 +66,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes); 
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/assignments", assignmentRoutes); 
+app.use("/api", repoRoutes); // <-- [ZAROORI] Digital Notes ke liye ise add kiya
 
 // 5. Global Error Handler
 app.use((err, req, res, next) => {
@@ -73,9 +74,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: "Internal Server Error", detail: err.message });
 });
 
-/**
- * PORT BINDING
- */
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server is live on port: ${PORT}`);
