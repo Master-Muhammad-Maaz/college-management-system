@@ -4,13 +4,11 @@ const studentSchema = new mongoose.Schema({
   name: { type: String, required: true },
   mobile: { type: String, required: true, unique: true }, 
   dob: { type: String, required: true },
-  // Password ko optional kar diya gaya hai
-  password: { type: String, required: false }, 
-  // Course ko optional kar diya gaya hai aur null allow kiya hai
+  password: { type: String, required: false }, // Optional
   course: { 
     type: String, 
     required: false, 
-    enum: ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II", null] 
+    enum: ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II", null] // Null allowed
   }
 }, { timestamps: true });
 
