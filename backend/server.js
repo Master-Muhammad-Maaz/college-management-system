@@ -12,7 +12,7 @@ const assignmentRoutes = require("./routes/assignments");
 
 const app = express();
 
-// 1. CORS CONFIGURATION
+// 1. CORS CONFIGURATION (Updated for flexibility)
 const allowedOrigins = [
   "http://localhost:3000", 
   "https://college-management-system123.vercel.app",
@@ -22,7 +22,8 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || origin.includes("vercel.app")) {
+    // Vercel ke subdomains aur local ko allow karne ke liye
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
@@ -35,9 +36,7 @@ app.use(cors({
 // 2. Middleware
 app.use(express.json());
 
-// STATIC FOLDERS
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
+// STATIC FOLDERS setup
 const uploadDirs = [
   path.join(__dirname, 'uploads'),
   path.join(__dirname, 'uploads', 'assignments')
@@ -48,6 +47,7 @@ uploadDirs.forEach(dir => {
       fs.mkdirSync(dir, { recursive: true });
   }
 });
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // 3. MongoDB Connection
 const MONGO_URI = process.env.MONGODB_URI || "mongodb+srv://mohammadmaaz8262:87654321@maaz123.eu2rnw5.mongodb.net/college_db?retryWrites=true&w=majority";
@@ -58,27 +58,27 @@ mongoose.connect(MONGO_URI)
   })
   .catch(err => {
     console.error("❌ MongoDB Connection Error:", err.message);
-    // Render status 1 prevent karne ke liye handle karein
   });
 
-// 4. API Routes
+// 4. API Routes (FIXED PATHS TO MATCH FRONTEND)
 app.get("/", (req, res) => res.send("College Management System API is active."));
 
-app.use("/api", authRoutes);
+// frontend 'api/auth/login' use kar raha hai isliye yahan /api/auth hona chahiye
+app.use("/api/auth", authRoutes); 
 app.use("/api/students", studentRoutes); 
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/assignments", assignmentRoutes); 
 
 // 5. Global Error Handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ success: false, message: "Internal Server Error" });
+  console.error("Global Error:", err.stack);
+  res.status(500).json({ success: false, message: "Internal Server Error", detail: err.message });
 });
 
 /**
  * FINAL PORT BINDING
  */
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000; // Render usually uses 10000
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server is live on port: ${PORT}`);
 });
