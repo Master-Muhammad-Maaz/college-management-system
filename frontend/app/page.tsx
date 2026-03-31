@@ -1,7 +1,7 @@
 "use client"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { ShieldCheck, GraduationCap, ChevronRight, Award, BookOpen, Clock } from "lucide-react"
+import { ShieldCheck, GraduationCap, ChevronRight, Award } from "lucide-react"
 
 export default function Home() {
   return (
@@ -56,7 +56,7 @@ export default function Home() {
         {/* ACCESS PORTALS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl px-4">
           
-          {/* STUDENT CARD */}
+          {/* STUDENT HUB CARD */}
           <Link href="/student-login" className="group">
             <motion.div 
               whileHover={{ y: -5 }}
@@ -73,7 +73,7 @@ export default function Home() {
             </motion.div>
           </Link>
 
-          {/* ADMIN CARD */}
+          {/* ADMIN PORTAL CARD */}
           <Link href="/admin-login" className="group">
             <motion.div 
               whileHover={{ y: -5 }}
@@ -91,12 +91,12 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* FACULTY SECTION (Clean Grid) */}
+        {/* Leadership Section */}
         <div className="mt-32 w-full max-w-5xl text-center">
           <h2 className="text-xs font-black uppercase tracking-[0.4em] text-blue-600 mb-10">Department Leadership</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { name: "Ms. R. S. Kale", role: "HOD" },
+              { name: "Mrs. R. S. Kale", role: "HOD" },
               { name: "Dr. A. B. Dube", role: "Professor" },
               { name: "Dr. S. M. Chavan", role: "Professor" },
               { name: "Ms. M. R. Gudade", role: "Professor" }
@@ -109,7 +109,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* SIGNATURE FOOTER */}
+        {/* Footer */}
         <footer className="mt-32 mb-16 w-full pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center font-bold text-white text-xl shadow-lg">M</div>
