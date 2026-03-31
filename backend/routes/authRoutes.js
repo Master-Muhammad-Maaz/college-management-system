@@ -4,16 +4,14 @@ const Admin = require("../models/Admin");
 const Student = require("../models/Student");
 const Folder = require("../models/Folder");
 const File = require("../models/File");
-const multer = require("multer");
-const path = require("path");
 
-// --- AUTHENTICATION ROUTES ---
+// --- 1. AUTHENTICATION ROUTES ---
 
+// Register Route
 router.post("/register", async (req, res) => {
   try {
     const { name, contact, dob, role } = req.body;
 
-    // Validation: Check if fields are missing
     if (!name || !contact || !dob || !role) {
       return res.status(400).json({ success: false, message: "All fields are required" });
     }
@@ -28,7 +26,6 @@ router.post("/register", async (req, res) => {
     }
 
     if (role === "student") {
-      // Check if student already exists
       const existingStudent = await Student.findOne({ contact });
       if (existingStudent) return res.json({ success: false, message: "Student already exists" });
       
@@ -40,16 +37,12 @@ router.post("/register", async (req, res) => {
     return res.status(400).json({ success: false, message: "Invalid role" });
 
   } catch (err) {
-    // FIX: Detailed logging for Vercel/Atlas debugging
     console.error("Registration Error:", err.message);
-    res.status(500).json({ 
-      success: false, 
-      message: "Server error during registration", 
-      error: err.message 
-    });
+    res.status(500).json({ success: false, message: "Server error during registration" });
   }
 });
 
+// Login Route
 router.post("/login", async (req, res) => {
   try {
     const { contact, dob, role } = req.body;
@@ -63,39 +56,56 @@ router.post("/login", async (req, res) => {
     if (role === "student") {
       const student = await Student.findOne({ contact, dob });
       if (!student) return res.json({ success: false, message: "Invalid Student Credentials" });
-      // Dashboard sync ke liye user object bhejna zaroori hai
       return res.json({ success: true, message: "Student Login Successful", user: student });
     }
     
     return res.json({ success: false, message: "Invalid role" });
   } catch (err) {
     console.error("Login Error:", err.message);
-    res.status(500).json({ success: false, message: "Server error", error: err.message });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-// --- FOLDER MANAGEMENT ROUTES ---
+// --- 2. FOLDER MANAGEMENT ROUTES ---
 
+// Create Folder
 router.post("/create-folder", async (req, res) => {
   try {
     const { name, parentId } = req.body; 
-    
     if (!name) return res.status(400).json({ success: false, message: "Folder name is required" });
 
     const newFolder = new Folder({ 
       name, 
-      parentId: (!parentId || parentId === "root" || parentId === "") ? null : parentId 
+      parentId: (!parentId || parentId === "root") ? null : parentId 
     });
     
     await newFolder.save();
-    res.json({ success: true, message: "Folder created successfully", folder: { ...newFolder._doc, type: 'folder' } });
+    res.json({ success: true, message: "Folder created successfully", folder: newFolder });
   } catch (err) {
-    console.error("Folder Error:", err.message);
+    console.error("Folder Create Error:", err.message);
     res.status(500).json({ success: false, message: "Server error creating folder" });
   }
 });
 
+// Get Folders & Files
 router.get("/folders/:parentId", async (req, res) => {
   try {
     const { parentId } = req.params;
-    const query = (parentId === "root" || parent
+    const query = (parentId === "root") ? { parentId: null } : { parentId };
+
+    const folders = await Folder.find(query);
+    const files = await File.find(query);
+
+    res.json({ 
+      success: true, 
+      folders: folders.map(f => ({ ...f._doc, type: 'folder' })),
+      files: files.map(f => ({ ...f._doc, type: 'file' }))
+    });
+  } catch (err) {
+    console.error("Fetch Error:", err.message);
+    res.status(500).json({ success: false, message: "Server error fetching contents" });
+  }
+});
+
+// --- VERY IMPORTANT: EXPORT THE ROUTER ---
+module.exports = router;
