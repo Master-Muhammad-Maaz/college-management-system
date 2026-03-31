@@ -8,53 +8,69 @@ const File = require("../models/File");
 // 1. REGISTER
 router.post("/register", async (req, res) => {
     try {
-        // Bhai, yahan course, password, aur mobile add kiya hai jo validation mang raha tha
-        const { name, contact, dob, role, course, password, mobile } = req.body;
-        
+        const { name, contact, dob, role, course, password } = req.body;
+
+        // Basic check for all roles
         if (!name || !contact || !dob || !role) {
-            return res.status(400).json({ success: false, message: "Basic fields missing" });
+            return res.status(400).json({ success: false, message: "Required fields missing" });
         }
 
-        const Model = role === "admin" ? Admin : Student;
-        
-        // Mobile ya contact dono mein se jo aapke schema mein unique hai usse check karein
-        const existing = await Model.findOne({ contact });
-        if (existing) return res.json({ success: false, message: "User already exists" });
-        
-        // Naya user banate waqt saara data pass karein taaki validation fail na ho
-        const newUser = new Model({ 
-            name, 
-            contact, 
-            dob,
-            course: course || "N/A", // Agar frontend se nahi aa raha toh default value
-            password: password || "123456", // Default password agar required hai
-            mobile: mobile || contact // Agar mobile required hai toh contact use kar lein
-        });
+        if (role === "student") {
+            // Student ke liye extra validation jo aapne schema mein rakhi hai
+            if (!course || !password) {
+                return res.status(400).json({ success: false, message: "Course and Password are required for students" });
+            }
 
-        await newUser.save();
-        res.json({ success: true, message: `${role} Registered Successfully` });
+            const existingStudent = await Student.findOne({ mobile: contact });
+            if (existingStudent) return res.json({ success: false, message: "Student already exists" });
+
+            const newStudent = new Student({
+                name,
+                mobile: contact, // Schema mein 'mobile' hai, frontend se 'contact' aa raha hai
+                dob,
+                password,
+                course // Must be one of: ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II"]
+            });
+
+            await newStudent.save();
+            return res.json({ success: true, message: "Student Registered Successfully" });
+        } 
+        
+        if (role === "admin") {
+            const existingAdmin = await Admin.findOne({ contact });
+            if (existingAdmin) return res.json({ success: false, message: "Admin already exists" });
+
+            const newAdmin = new Admin({ name, contact, dob });
+            await newAdmin.save();
+            return res.json({ success: true, message: "Admin Registered Successfully" });
+        }
+
     } catch (err) {
-        // Ab yahan validation error nahi aayega
-        res.status(500).json({ success: false, message: err.message });
+        // Agar enum match nahi hua (e.g. B.Sc-1 bhej diya) toh ye error pakdega
+        res.status(500).json({ success: false, message: "Database Error: " + err.message });
     }
 });
 
-// 2. LOGIN
+// 2. LOGIN (Ensure mapping is correct)
 router.post("/login", async (req, res) => {
     try {
         const { contact, dob, role } = req.body;
-        const Model = role === "admin" ? Admin : Student;
-        const user = await Model.findOne({ contact, dob });
-        if (!user) return res.json({ success: false, message: "Invalid Credentials" });
         
-        // Login success par user data bhej rahe hain taaki dashboard load ho sake
-        res.json({ success: true, message: "Login Successful", user });
+        if (role === "student") {
+            const user = await Student.findOne({ mobile: contact, dob });
+            if (!user) return res.json({ success: false, message: "Invalid Student Credentials" });
+            return res.json({ success: true, message: "Login Successful", user });
+        } else {
+            const user = await Admin.findOne({ contact, dob });
+            if (!user) return res.json({ success: false, message: "Invalid Admin Credentials" });
+            return res.json({ success: true, message: "Login Successful", user });
+        }
     } catch (err) {
         res.status(500).json({ success: false, message: "Server error" });
     }
 });
 
-// 3. FOLDERS & FILES
+// 3. FOLDERS & FILES (Same as before)
 router.post("/create-folder", async (req, res) => {
     try {
         const { name, parentId } = req.body;
