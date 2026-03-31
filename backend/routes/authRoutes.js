@@ -1,13 +1,12 @@
 const express = require("express");
-const router = express.Router(); 
+const router = express.Router();
 const Admin = require("../models/Admin");
 const Student = require("../models/Student");
 
-// 1. REGISTER
 router.post("/register", async (req, res) => {
     try {
         const { name, contact, dob, role, course, password } = req.body;
-        
+
         if (!name || !contact || !dob || !role) {
             return res.status(400).json({ success: false, message: "Required fields missing" });
         }
@@ -15,30 +14,34 @@ router.post("/register", async (req, res) => {
         const cleanContact = contact.trim();
 
         if (role === "student") {
-            // Check both 'mobile' and 'contact' fields to prevent duplicates
-            const existing = await Student.findOne({ 
-                $or: [{ mobile: cleanContact }, { contact: cleanContact }] 
+            const existing = await Student.findOne({
+                $or: [{ mobile: cleanContact }, { contact: cleanContact }]
             });
-            
-            if (existing) return res.json({ success: false, message: "User already exists with this number" });
+
+            if (existing) {
+                return res.json({ success: false, message: "User already exists with this number" });
+            }
 
             const newStudent = new Student({
                 name: name.trim(),
-                mobile: cleanContact, 
+                mobile: cleanContact,
                 dob: dob.trim(),
                 password: password || "123456",
-                // Agar course empty hai toh "General" set karein (Schema enum check ke liye)
-                course: course || "General" 
+                course: course || "General"
             });
+
             await newStudent.save();
+
             res.json({ success: true, message: "Student Registered Successfully" });
         } else {
-            const newAdmin = new Admin({ 
-                name: name.trim(), 
-                contact: cleanContact, 
-                dob: dob.trim() 
+            const newAdmin = new Admin({
+                name: name.trim(),
+                contact: cleanContact,
+                dob: dob.trim()
             });
+
             await newAdmin.save();
+
             res.json({ success: true, message: "Admin Registered Successfully" });
         }
     } catch (err) {
@@ -46,11 +49,10 @@ router.post("/register", async (req, res) => {
     }
 });
 
-// 2. LOGIN (FIXED FOR FIELD MISMATCH)
 router.post("/login", async (req, res) => {
     try {
         const { contact, dob, role } = req.body;
-        
+
         if (!contact || !dob) {
             return res.status(400).json({ success: false, message: "Mobile and DOB are required" });
         }
@@ -59,23 +61,29 @@ router.post("/login", async (req, res) => {
         const cleanDob = dob.trim();
 
         if (role === "student") {
-            // $or use kiya hai taaki 'SAAD' (contact field) aur naye students (mobile field) dono login ho sakein
-            const user = await Student.findOne({ 
+            const user = await Student.findOne({
                 $or: [
-                    { mobile: cleanContact }, 
+                    { mobile: cleanContact },
                     { contact: cleanContact }
-                ], 
-                dob: cleanDob 
-            }); 
-            
+                ],
+                dob: cleanDob
+            });
+
             if (!user) {
                 return res.json({ success: false, message: "Invalid Credentials. Number or DOB mismatch." });
             }
-            
+
             res.json({ success: true, message: "Login Successful", user });
         } else {
-            const user = await Admin.findOne({ contact: cleanContact, dob: cleanDob });
-            if (!user) return res.json({ success: false, message: "Invalid Admin Credentials" });
+            const user = await Admin.findOne({
+                contact: cleanContact,
+                dob: cleanDob
+            });
+
+            if (!user) {
+                return res.json({ success: false, message: "Invalid Admin Credentials" });
+            }
+
             res.json({ success: true, message: "Admin Login Successful", user });
         }
     } catch (err) {
