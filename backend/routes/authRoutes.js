@@ -53,13 +53,14 @@ router.post("/login", async (req, res) => {
 
 // --- FOLDER MANAGEMENT ROUTES ---
 
-// 1. Create Folder
+// 1. Create Folder (FIXED: Root Mapping)
 router.post("/create-folder", async (req, res) => {
   try {
     const { name, parentId } = req.body; 
     const newFolder = new Folder({ 
       name, 
-      parentId: parentId && parentId !== "root" ? parentId : null 
+      // FIX: Ensure "root" or empty string becomes null in DB
+      parentId: (!parentId || parentId === "root") ? null : parentId 
     });
     await newFolder.save();
     res.json({ success: true, message: "Folder created successfully", folder: { ...newFolder._doc, type: 'folder' } });
@@ -68,23 +69,19 @@ router.post("/create-folder", async (req, res) => {
   }
 });
 
-// 2. Get Folders by Parent ID (Optimized for Frontend Icons)
+// 2. Get Folders (FIXED: Root Filter)
 router.get("/folders/:parentId", async (req, res) => {
   try {
     const { parentId } = req.params;
-    const query = parentId === "root" ? { parentId: null } : { parentId };
+    const query = (parentId === "root" || parentId === "null") ? { parentId: null } : { parentId };
     const folders = await Folder.find(query).lean();
-    
-    // Har folder ke saath 'type' tag bhejna taaki dashboard icons sahi dikhein
     const foldersWithType = folders.map(f => ({ ...f, type: 'folder' }));
-    
     res.json({ success: true, folders: foldersWithType });
   } catch (err) {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-// 3. Delete Folder
 router.delete("/delete-folder/:id", async (req, res) => {
   try {
     await Folder.findByIdAndDelete(req.params.id);
@@ -96,7 +93,6 @@ router.delete("/delete-folder/:id", async (req, res) => {
 
 // --- FILE MANAGEMENT ROUTES ---
 
-// Multer Storage Configuration
 const storage = multer.diskStorage({
   destination: "./uploads/",
   filename: (req, file, cb) => {
@@ -105,14 +101,15 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// 1. Upload File
+// 1. Upload File (FIXED: Root Mapping)
 router.post("/upload", upload.single("file"), async (req, res) => {
   try {
     const { folderId } = req.body;
     const newFile = new File({
       name: req.file.originalname,
       path: req.file.path,
-      folderId: folderId === "root" ? null : folderId
+      // FIX: Ensure root files are saved with null folderId
+      folderId: (!folderId || folderId === "root") ? null : folderId
     });
     await newFile.save();
     res.json({ success: true, message: "File uploaded successfully", file: { ...newFile._doc, type: 'file' } });
@@ -121,23 +118,19 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-// 2. Get Files by Folder ID (Optimized for Frontend Icons)
+// 2. Get Files (FIXED: Root Filter)
 router.get("/files/:folderId", async (req, res) => {
   try {
     const { folderId } = req.params;
-    const query = folderId === "root" ? { folderId: null } : { folderId };
+    const query = (folderId === "root" || folderId === "null") ? { folderId: null } : { folderId };
     const files = await File.find(query).lean();
-    
-    // Har file ke saath 'type' tag bhejna
     const filesWithType = files.map(f => ({ ...f, type: 'file' }));
-    
     res.json({ success: true, files: filesWithType });
   } catch (err) {
     res.status(500).json({ success: false, message: "Error fetching files" });
   }
 });
 
-// 3. Delete File Route
 router.delete("/delete-file/:id", async (req, res) => {
   try {
     await File.findByIdAndDelete(req.params.id);
