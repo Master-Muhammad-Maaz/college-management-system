@@ -31,7 +31,7 @@ router.post("/swipe-session", async (req, res) => {
   }
 });
 
-// 2. MARK-HOLIDAY: Holiday mark karne ka naya route (Taaki error khatam ho jaye)
+// 2. MARK-HOLIDAY: Holiday mark karne ka route
 router.post("/mark-holiday", async (req, res) => {
   try {
     const { date, course } = req.body;
@@ -43,8 +43,8 @@ router.post("/mark-holiday", async (req, res) => {
     const update = {
       date,
       course,
-      isHoliday: true, // Holiday flag set karein
-      attendanceData: [] // Holiday ke din attendance data empty rahega
+      isHoliday: true,
+      attendanceData: [] 
     };
 
     await Attendance.findOneAndUpdate({ date, course }, update, { upsert: true, new: true });
@@ -55,14 +55,17 @@ router.post("/mark-holiday", async (req, res) => {
   }
 });
 
-// 3. SMART EXCEL EXPORT: Dynamic Dates aur Calculation ke saath
+// 3. SMART EXCEL EXPORT: Fixed for M.SC-I vs M.Sc-I Spelling Issues
 router.get("/export", async (req, res) => {
   try {
-    const { course } = req.query; 
+    let { course } = req.query; 
     if (!course) return res.status(400).send("Course specify karein.");
 
-    const students = await StudentRecord.find({ course }).sort({ srNo: 1 });
-    const attendanceRecords = await Attendance.find({ course }).sort({ date: 1 });
+    // CASE-INSENSITIVE REGEX: Ye M.SC-I aur M.Sc-I dono ko match karega
+    const courseRegex = new RegExp(`^${course}$`, 'i');
+
+    const students = await StudentRecord.find({ course: courseRegex }).sort({ srNo: 1 });
+    const attendanceRecords = await Attendance.find({ course: courseRegex }).sort({ date: 1 });
     
     const allDates = [...new Set(attendanceRecords.map(r => r.date))].filter(Boolean).sort();
 
@@ -77,7 +80,7 @@ router.get("/export", async (req, res) => {
     headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2F5597' } };
     headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
 
-    // Data Rows
+    // Data Rows Logic
     students.forEach(student => {
       let pCount = 0, aCount = 0, hCount = 0;
       let rowData = [student.srNo, student.name];
