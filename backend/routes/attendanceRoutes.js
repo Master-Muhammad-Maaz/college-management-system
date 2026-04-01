@@ -4,90 +4,69 @@ const Attendance = require("../models/Attendance");
 const StudentRecord = require("../models/StudentRecord");
 const ExcelJS = require("exceljs");
 
-// FINAL EXCEL EXPORT (Full Words: PRESENT, ABSENT, HOLIDAY)
+// 1. SWIPE-SESSION (Saves/Updates Full Batch)
+router.post("/swipe-session", async (req, res) => {
+  try {
+    const { date, course, attendanceData } = req.body; 
+    const update = {
+      date,
+      course,
+      isHoliday: false,
+      attendanceData: attendanceData.map(item => ({
+        studentId: item.studentId,
+        status: item.status.toUpperCase() // Force Uppercase
+      }))
+    };
+    await Attendance.findOneAndUpdate({ date, course }, update, { upsert: true });
+    res.json({ success: true, message: "Attendance updated!" });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// 2. SMART EXCEL EXPORT (Full Words & Dynamic Dates)
 router.get("/export", async (req, res) => {
   try {
     const { course } = req.query; 
-    
     const students = await StudentRecord.find({ course }).sort({ srNo: 1 });
     const attendanceRecords = await Attendance.find({ course }).sort({ date: 1 });
-    
     const allDates = [...new Set(attendanceRecords.map(r => r.date))].sort();
 
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet(`${course} Attendance`);
+    const worksheet = workbook.addWorksheet(`${course} Report`);
 
-    // 1. MAIN HEADERS (Capitalized)
-    let headerRowValues = [
-      "SR. NO", 
-      "STUDENT NAME", 
-      ...allDates, 
-      "TOTAL HOLIDAYS", 
-      "TOTAL PRESENT DAYS", 
-      "TOTAL ABSENT DAYS", 
-      "PERCENTAGE"
-    ];
-    
-    const headerRow = worksheet.addRow(headerRowValues);
+    // Headers with Dynamic Dates
+    let headers = ["SR. NO", "STUDENT NAME", ...allDates, "TOTAL HOLIDAYS", "TOTAL PRESENT", "TOTAL ABSENT", "PERCENTAGE"];
+    const headerRow = worksheet.addRow(headers);
     headerRow.font = { bold: true };
-    headerRow.alignment = { horizontal: 'center' };
 
-    // 2. SUB-HEADER (Indicating Full Status)
-    let subHeader = ["", "STATUS ->"];
-    allDates.forEach(() => subHeader.push("PRESENT / ABSENT / HOLIDAY"));
-    const subHeaderRow = worksheet.addRow(subHeader);
-    subHeaderRow.font = { italic: true, size: 9, color: { argb: 'FF555555' } };
-
-    // 3. DATA PROCESSING
     students.forEach(student => {
       let pCount = 0, aCount = 0, hCount = 0;
       let rowData = [student.srNo, student.name];
 
       allDates.forEach(date => {
-        const dailyRecord = attendanceRecords.find(r => r.date === date);
-        const studentStatus = dailyRecord?.attendanceData.find(at => 
-          at.studentId?.toString() === student._id.toString()
-        );
+        const record = attendanceRecords.find(r => r.date === date);
+        const sStatus = record?.attendanceData.find(at => at.studentId?.toString() === student._id.toString());
         
-        if (dailyRecord?.isHoliday) {
-          rowData.push("HOLIDAY");
-          hCount++;
-        } else if (studentStatus) {
-          const s = studentStatus.status.toUpperCase(); // "PRESENT" or "ABSENT"
-          rowData.push(s);
-          if (s === "PRESENT") pCount++; 
-          else if (s === "ABSENT") aCount++;
-        } else {
-          rowData.push("-"); 
-        }
+        if (record?.isHoliday) {
+          rowData.push("HOLIDAY"); hCount++;
+        } else if (sStatus) {
+          const status = sStatus.status.toUpperCase();
+          rowData.push(status);
+          if (status === "PRESENT") pCount++; else if (status === "ABSENT") aCount++;
+        } else { rowData.push("-"); }
       });
 
-      const totalActive = pCount + aCount;
-      const percentage = totalActive > 0 
-        ? `${((pCount / totalActive) * 100).toFixed(2)}%` 
-        : "0%";
-      
-      rowData.push(hCount, pCount, aCount, percentage);
+      const total = pCount + aCount;
+      const perc = total > 0 ? `${((pCount / total) * 100).toFixed(2)}%` : "0%";
+      rowData.push(hCount, pCount, aCount, perc);
       worksheet.addRow(rowData);
     });
 
-    // 4. COLUMN WIDTH & STYLING
-    worksheet.columns.forEach((col, index) => {
-      if (index === 1) col.width = 30; // Name column
-      else if (index > 1 && index < (allDates.length + 2)) col.width = 20; // Date columns (wider for full words)
-      else col.width = 18; // Totals columns
-    });
-
-    // Final response
+    worksheet.columns.forEach(col => { col.width = 20; });
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    res.setHeader("Content-Disposition", `attachment; filename=${course}_Attendance_Report.xlsx`);
-    
+    res.setHeader("Content-Disposition", `attachment; filename=${course}_Report.xlsx`);
     await workbook.xlsx.write(res);
     res.end();
-
-  } catch (err) {
-    res.status(500).send("Export Error: " + err.message);
-  }
+  } catch (err) { res.status(500).send(err.message); }
 });
 
 module.exports = router;
