@@ -22,7 +22,6 @@ export default function AdminManagement() {
   const courses = ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II"]
   const API_BASE = "https://college-management-system-ae1l.onrender.com";
 
-  // Motion Values for Swipe Logic
   const y = useMotionValue(0);
   const rotateX = useTransform(y, [-200, 200], [25, -25]);
   const opacity = useTransform(y, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
@@ -41,6 +40,7 @@ export default function AdminManagement() {
       const res = await fetch(`${API_BASE}/api/students/list?course=${selectedCourse}`)
       const data = await res.json()
       if (data.success) setStudents(data.students);
+      else setStudents([]); // Clear list if no students found
       await checkAttendanceStatus();
     } catch (err) { console.error(err); } 
     finally { setLoading(false); }
@@ -83,8 +83,9 @@ export default function AdminManagement() {
       });
       const data = await res.json();
       if (data.success) {
+        setStudents([]); // UI list turant khali karne ke liye
+        setAttendanceDone(false);
         alert(`🗑️ ${selectedCourse} has been completely cleared!`);
-        fetchStudents();
       }
     } catch (err) { alert("Error clearing records"); }
     finally { setLoading(false); }
@@ -195,26 +196,33 @@ export default function AdminManagement() {
             <div className="p-8">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Class Strength: {students.length} Students</p>
                 <div className="overflow-x-auto">
-                  <table className="w-full mt-6 text-left border-collapse">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="p-4 text-[9px] font-black uppercase text-slate-400">SR</th>
-                        <th className="p-4 text-[9px] font-black uppercase text-slate-400">Name</th>
-                        <th className="p-4 text-[9px] font-black uppercase text-slate-400 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {students.map((s: any) => (
-                        <tr key={s._id} className="border-b hover:bg-slate-50 transition-colors">
-                          <td className="p-4 font-bold text-blue-600 text-[11px]">#{s.srNo}</td>
-                          <td className="p-4 font-black text-slate-700 text-[11px] uppercase tracking-tighter">{s.name}</td>
-                          <td className="p-4 text-right">
-                            <span className="text-[8px] font-black uppercase bg-slate-100 px-3 py-1 rounded-full text-slate-400 italic">Registered</span>
-                          </td>
+                  {students.length > 0 ? (
+                    <table className="w-full mt-6 text-left border-collapse">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="p-4 text-[9px] font-black uppercase text-slate-400">SR</th>
+                          <th className="p-4 text-[9px] font-black uppercase text-slate-400">Name</th>
+                          <th className="p-4 text-[9px] font-black uppercase text-slate-400 text-right">Action</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {students.map((s: any) => (
+                          <tr key={s._id} className="border-b hover:bg-slate-50 transition-colors">
+                            <td className="p-4 font-bold text-blue-600 text-[11px]">#{s.srNo}</td>
+                            <td className="p-4 font-black text-slate-700 text-[11px] uppercase tracking-tighter">{s.name}</td>
+                            <td className="p-4 text-right">
+                              <span className="text-[8px] font-black uppercase bg-slate-100 px-3 py-1 rounded-full text-slate-400 italic">Registered</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-20 text-slate-300">
+                      <Trash2 size={48} className="mb-4 opacity-20" />
+                      <p className="text-[10px] font-black uppercase tracking-widest">No Students Found</p>
+                    </div>
+                  )}
                 </div>
             </div>
           {loading && <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex justify-center items-center z-50"><Loader2 className="animate-spin text-blue-600" size={40} /></div>}
