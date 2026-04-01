@@ -4,53 +4,45 @@ const Attendance = require("../models/Attendance");
 const StudentRecord = require("../models/StudentRecord");
 const ExcelJS = require("exceljs");
 
-// FINAL SMART EXCEL EXPORT (Dynamic Dates & p/a/h format)
+// FINAL EXCEL EXPORT (Full Words: PRESENT, ABSENT, HOLIDAY)
 router.get("/export", async (req, res) => {
   try {
     const { course } = req.query; 
     
-    // 1. Students aur Attendance Records fetch karein
     const students = await StudentRecord.find({ course }).sort({ srNo: 1 });
     const attendanceRecords = await Attendance.find({ course }).sort({ date: 1 });
     
-    // 2. Database se saari Unique Dates nikaalein (Columns ke liye)
     const allDates = [...new Set(attendanceRecords.map(r => r.date))].sort();
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(`${course} Attendance`);
 
-    // 3. Row 1: Main Headers Setup
+    // 1. MAIN HEADERS (Capitalized)
     let headerRowValues = [
-      "sr.no", 
-      "student name", 
+      "SR. NO", 
+      "STUDENT NAME", 
       ...allDates, 
-      "total holiday's", 
-      "total present days", 
-      "total apsent days", 
-      "average percentgae"
+      "TOTAL HOLIDAYS", 
+      "TOTAL PRESENT DAYS", 
+      "TOTAL ABSENT DAYS", 
+      "PERCENTAGE"
     ];
     
     const headerRow = worksheet.addRow(headerRowValues);
-    
-    // Header Styling (Bold & Center)
-    headerRow.eachCell((cell) => {
-      cell.font = { bold: true };
-      cell.alignment = { horizontal: 'center' };
-      cell.border = { bottom: { style: 'thin' } };
-    });
+    headerRow.font = { bold: true };
+    headerRow.alignment = { horizontal: 'center' };
 
-    // 4. Row 2: "p/a/h" Sub-header Indicator
-    let subHeader = ["", "p/a/h"];
-    allDates.forEach(() => subHeader.push("p/a/h"));
+    // 2. SUB-HEADER (Indicating Full Status)
+    let subHeader = ["", "STATUS ->"];
+    allDates.forEach(() => subHeader.push("PRESENT / ABSENT / HOLIDAY"));
     const subHeaderRow = worksheet.addRow(subHeader);
-    subHeaderRow.font = { italic: true, size: 10 };
+    subHeaderRow.font = { italic: true, size: 9, color: { argb: 'FF555555' } };
 
-    // 5. Students Data Processing
+    // 3. DATA PROCESSING
     students.forEach(student => {
       let pCount = 0, aCount = 0, hCount = 0;
       let rowData = [student.srNo, student.name];
 
-      // Har date ke column mein data fill karein
       allDates.forEach(date => {
         const dailyRecord = attendanceRecords.find(r => r.date === date);
         const studentStatus = dailyRecord?.attendanceData.find(at => 
@@ -58,40 +50,35 @@ router.get("/export", async (req, res) => {
         );
         
         if (dailyRecord?.isHoliday) {
-          rowData.push("h");
+          rowData.push("HOLIDAY");
           hCount++;
         } else if (studentStatus) {
-          const s = studentStatus.status.toLowerCase();
-          if (s === "present") { 
-            rowData.push("p"); pCount++; 
-          } else if (s === "absent") { 
-            rowData.push("a"); aCount++; 
-          } else { 
-            rowData.push("-"); 
-          }
+          const s = studentStatus.status.toUpperCase(); // "PRESENT" or "ABSENT"
+          rowData.push(s);
+          if (s === "PRESENT") pCount++; 
+          else if (s === "ABSENT") aCount++;
         } else {
-          rowData.push("-");
+          rowData.push("-"); 
         }
       });
 
-      // Calculations
-      const totalActiveDays = pCount + aCount;
-      const percentage = totalActiveDays > 0 
-        ? `${((pCount / totalActiveDays) * 100).toFixed(2)}%` 
+      const totalActive = pCount + aCount;
+      const percentage = totalActive > 0 
+        ? `${((pCount / totalActive) * 100).toFixed(2)}%` 
         : "0%";
       
-      // Footer Totals add karein
       rowData.push(hCount, pCount, aCount, percentage);
       worksheet.addRow(rowData);
     });
 
-    // 6. Column Width Adjust karein
+    // 4. COLUMN WIDTH & STYLING
     worksheet.columns.forEach((col, index) => {
-      if (index === 1) col.width = 30; // Student Name bada rakhein
-      else col.width = 15;
+      if (index === 1) col.width = 30; // Name column
+      else if (index > 1 && index < (allDates.length + 2)) col.width = 20; // Date columns (wider for full words)
+      else col.width = 18; // Totals columns
     });
 
-    // 7. Response Send karein
+    // Final response
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.setHeader("Content-Disposition", `attachment; filename=${course}_Attendance_Report.xlsx`);
     
