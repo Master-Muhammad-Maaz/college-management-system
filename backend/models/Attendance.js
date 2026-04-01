@@ -11,12 +11,12 @@ const AttendanceSchema = new mongoose.Schema({
   attendanceData: [
     {
       studentId: { type: mongoose.Schema.Types.ObjectId, ref: "StudentRecord" },
-      status: { type: String, enum: ["Present", "Absent", "Holiday"], default: "Absent" }
+      status: { type: String, enum: ["PRESENT", "ABSENT", "HOLIDAY"], default: "ABSENT" }
     }
   ]
 }, { timestamps: true });
 
-// Ek course ki ek date par ek hi entry honi chahiye
+// Ensure one record per course per day
 AttendanceSchema.index({ date: 1, course: 1 }, { unique: true });
 
 module.exports = mongoose.model("Attendance", AttendanceSchema);
