@@ -3,13 +3,11 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { 
   BookOpen, 
-  Calendar, 
-  FileText, 
   LayoutDashboard, 
   LogOut, 
   User, 
   Loader2, 
-  FolderIcon // Naya icon notes ke liye
+  FolderIcon 
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
@@ -19,7 +17,6 @@ export default function StudentDashboard() {
   const [isVerifying, setIsVerifying] = useState(true)
 
   useEffect(() => {
-    // Session check logic (No changes here)
     const data = localStorage.getItem("studentData")
     
     if (!data || data === "undefined") {
@@ -42,7 +39,6 @@ export default function StudentDashboard() {
     router.push("/student-login")
   }
 
-  // Loading state
   if (isVerifying || !student) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white">
       <Loader2 className="animate-spin text-blue-600 mb-4" size={32} />
@@ -54,7 +50,7 @@ export default function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans p-6 md:p-12">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         
         {/* TOP NAVIGATION */}
         <div className="flex justify-between items-center mb-12">
@@ -70,7 +66,6 @@ export default function StudentDashboard() {
           <button 
             onClick={handleLogout} 
             className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all shadow-sm border border-red-100 group"
-            title="Logout Session"
           >
             <LogOut size={20} className="group-active:scale-90 transition-transform" />
           </button>
@@ -94,62 +89,48 @@ export default function StudentDashboard() {
                 {student.course || "General Student"}
               </span>
               <span className="px-5 py-2 bg-white text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-200">
-                Contact: {student.mobile || student.contact || "N/A"}
+                Contact: {student.mobile || "N/A"}
               </span>
             </div>
           </div>
         </motion.div>
 
-        {/* ACTION GRID - UPDATED TO 4 COLUMNS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* CLEAN ACTION GRID - ONLY 2 CARDS NOW */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
           {[
             { 
-              icon: <BookOpen size={24} />, 
+              icon: <BookOpen size={28} />, 
               title: "Assignments", 
               desc: "Access shared resources.", 
               color: "bg-blue-50 text-blue-600",
               link: "/student/assignments" 
             },
             { 
-              icon: <FolderIcon size={24} />, 
+              icon: <FolderIcon size={28} />, 
               title: "Digital Notes", 
               desc: "View study materials.", 
-              color: "bg-indigo-50 text-indigo-600", // Alag color pehchan ke liye
+              color: "bg-indigo-50 text-indigo-600",
               link: "/student/notes" 
-            },
-            { 
-              icon: <Calendar size={24} />, 
-              title: "Attendance", 
-              desc: "Check monthly report.", 
-              color: "bg-emerald-50 text-emerald-600",
-              link: "/student/attendance" 
-            },
-            { 
-              icon: <FileText size={24} />, 
-              title: "Internal Marks", 
-              desc: "View assessment results.", 
-              color: "bg-orange-50 text-orange-600",
-              link: "/student/marks" 
             }
           ].map((item, idx) => (
             <motion.div 
               key={idx}
-              whileHover={{ y: -5 }}
+              whileHover={{ y: -8, scale: 1.02 }}
               onClick={() => router.push(item.link)}
-              className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-100/50 group hover:border-blue-200 transition-all cursor-pointer"
+              className="bg-white p-10 rounded-[45px] border border-slate-100 shadow-2xl shadow-slate-200/40 group hover:border-blue-200 transition-all cursor-pointer flex flex-col items-center text-center"
             >
-               <div className={`p-4 ${item.color} w-fit rounded-2xl mb-6 transition-all`}>
+               <div className={`p-5 ${item.color} w-fit rounded-3xl mb-6 transition-all`}>
                  {item.icon}
                </div>
-               <h3 className="text-sm font-black uppercase tracking-widest text-[#0f172a]">{item.title}</h3>
-               <p className="text-xs text-slate-400 mt-2 font-medium">{item.desc}</p>
+               <h3 className="text-lg font-black uppercase tracking-widest text-[#0f172a]">{item.title}</h3>
+               <p className="text-xs text-slate-400 mt-2 font-bold uppercase tracking-tight">{item.desc}</p>
             </motion.div>
           ))}
         </div>
 
         {/* FOOTER INFO */}
-        <div className="mt-12 text-center">
-          <p className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.3em]">
+        <div className="mt-16 text-center">
+          <p className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.4em]">
             College Management System &copy; 2026
           </p>
         </div>
