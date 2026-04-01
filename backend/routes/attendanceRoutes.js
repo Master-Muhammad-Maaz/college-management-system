@@ -4,47 +4,61 @@ const Attendance = require("../models/Attendance");
 const StudentRecord = require("../models/StudentRecord");
 const ExcelJS = require("exceljs");
 
-// 1. BULK SYNC (Existing Logic - No Change)
-router.post("/bulk-sync", async (req, res) => {
+// 1. [NEW] HOLIDAY MODE - Marks all students of a course as 'Holiday' for a date
+router.post("/holiday-mode", async (req, res) => {
   try {
-    const { date, course, records } = req.body;
-    const operations = Object.entries(records).map(([studentId, statusAbbr]) => {
-      let fullStatus = "Present";
-      if (statusAbbr === 'A') fullStatus = "Absent";
-      if (statusAbbr === 'H') fullStatus = "Holiday";
+    const { date, course } = req.body;
+    const students = await StudentRecord.find({ course });
+    
+    if (students.length === 0) return res.status(400).json({ success: false, message: "No students found in this course" });
 
-      return {
-        updateOne: {
-          filter: { studentId, date },
-          update: { studentId, date, status: fullStatus, course },
-          upsert: true
-        }
-      };
-    });
-    if (operations.length === 0) return res.status(400).json({ success: false, message: "No records" });
+    const operations = students.map(student => ({
+      updateOne: {
+        filter: { studentId: student._id, date },
+        update: { studentId: student._id, date, status: "Holiday", course },
+        upsert: true
+      }
+    }));
+
     await Attendance.bulkWrite(operations);
-    res.json({ success: true, message: "Attendance synced successfully!" });
+    res.json({ success: true, message: `Holiday marked for all ${course} students.` });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// 2. Mark Single Attendance (Existing Logic)
-router.post("/mark", async (req, res) => {
+// 2. [NEW] CLEAR BATCH - Deletes all attendance records for a specific course
+router.delete("/clear-batch", async (req, res) => {
   try {
-    const { studentId, date, status, course } = req.body;
-    const record = await Attendance.findOneAndUpdate(
-      { studentId, date },
-      { studentId, date, status, course },
-      { upsert: true, new: true }
-    );
-    res.json({ success: true, record });
+    const { course } = req.query;
+    if (!course) return res.status(400).json({ success: false, message: "Course name required" });
+    
+    await Attendance.deleteMany({ course });
+    res.json({ success: true, message: `All attendance records for ${course} have been deleted.` });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// 3. Get Attendance Today (Existing Logic)
+// 3. SWIPE-SESSION ATTENDANCE (Existing updated with session safety)
+router.post("/swipe-session", async (req, res) => {
+  try {
+    const { date, course, attendanceData } = req.body; 
+    const operations = attendanceData.map(item => ({
+      updateOne: {
+        filter: { studentId: item.studentId, date: date },
+        update: { studentId: item.studentId, date: date, status: item.status, course: course },
+        upsert: true
+      }
+    }));
+    await Attendance.bulkWrite(operations);
+    res.json({ success: true, message: `Attendance updated for ${attendanceData.length} students.` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 4. Get Attendance Today (Used for Duplicate Check)
 router.get("/today/:date/:course", async (req, res) => {
   try {
     const { date, course } = req.params;
@@ -55,7 +69,7 @@ router.get("/today/:date/:course", async (req, res) => {
   }
 });
 
-// 4. Detailed Excel Export (Existing Logic)
+// 5. Detailed Excel Export
 router.get("/export", async (req, res) => {
   try {
     const { course } = req.query; 
@@ -108,34 +122,6 @@ router.get("/export", async (req, res) => {
     res.end();
   } catch (err) {
     res.status(500).send("Export Error: " + err.message);
-  }
-});
-
-// 5. [NEW] SWIPE-SESSION ATTENDANCE 
-// Ye route aapke animated cards ka sara data ek baar mein save karega
-router.post("/swipe-session", async (req, res) => {
-  try {
-    const { date, course, attendanceData } = req.body; 
-    // attendanceData format: [{ studentId: "ID", status: "Present" }, ...]
-
-    const operations = attendanceData.map(item => ({
-      updateOne: {
-        filter: { studentId: item.studentId, date: date },
-        update: { 
-          studentId: item.studentId, 
-          date: date, 
-          status: item.status, 
-          course: course 
-        },
-        upsert: true
-      }
-    }));
-
-    await Attendance.bulkWrite(operations);
-    res.json({ success: true, message: `Attendance updated for ${attendanceData.length} students.` });
-  } catch (err) {
-    console.error("Swipe Session Error:", err);
-    res.status(500).json({ success: false, message: err.message });
   }
 });
 
