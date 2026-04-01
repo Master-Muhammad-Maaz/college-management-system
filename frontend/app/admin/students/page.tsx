@@ -21,19 +21,22 @@ export default function AdminManagement() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const courses = ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II"]
+  
+  // Base URL for API
   const API_BASE = "https://college-management-system-ae1l.onrender.com";
 
   const y = useMotionValue(0);
   const rotateX = useTransform(y, [-200, 200], [25, -25]);
   const opacity = useTransform(y, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
 
+  // 1. Check if attendance or holiday is already marked for today
   const checkAttendanceStatus = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/attendance/today/${selectedDate}/${selectedCourse}`);
       const data = await res.json();
-      // Yahan data.record (singular) check hoga kyunki naya model object bhejta hai
+      // Naye model ke hisaab se check karein agar record exists karta hai
       setAttendanceDone(data.success && data.record);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("Status Check Error:", err); }
   };
 
   const fetchStudents = async () => {
@@ -44,7 +47,7 @@ export default function AdminManagement() {
       if (data.success) setStudents(data.students);
       else setStudents([]); 
       await checkAttendanceStatus();
-    } catch (err) { console.error(err); } 
+    } catch (err) { console.error("Fetch Students Error:", err); } 
     finally { setLoading(false); }
   }
 
@@ -66,7 +69,7 @@ export default function AdminManagement() {
       const res = await fetch(`${API_BASE}/api/students/import`, { method: "POST", body: formData });
       const data = await res.json();
       if (data.success) {
-        alert(`✅ ${data.count} Students Imported Successfully!`);
+        alert(`✅ ${data.count} Students Imported!`);
         fetchStudents();
       } else { alert("❌ Import Failed: " + data.message); }
     } catch (err) { alert("Error uploading file"); } 
@@ -76,20 +79,30 @@ export default function AdminManagement() {
     }
   };
 
+  // 2. FIXED HOLIDAY MODE (Naya Route Call Karega)
   const handleHolidayMode = async () => {
-    if (attendanceDone) return alert("Attendance or Holiday already marked!");
-    if (!confirm(`Mark today as Holiday for ${selectedCourse}?`)) return;
+    if (attendanceDone) return alert("Attendance or Holiday already marked for today!");
+    if (!confirm(`Mark ${selectedDate} as Holiday for ${selectedCourse}?`)) return;
+    
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/attendance/holiday-mode`, {
+      const res = await fetch(`${API_BASE}/api/attendance/mark-holiday`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: selectedDate, course: selectedCourse })
       });
       const data = await res.json();
-      if (data.success) { alert("✅ Holiday Marked!"); fetchStudents(); }
-    } catch (err) { alert("Error marking holiday"); }
-    finally { setLoading(false); }
+      if (data.success) { 
+        alert("✅ Holiday Marked Successfully!"); 
+        fetchStudents(); 
+      } else {
+        alert("❌ Error: " + data.message);
+      }
+    } catch (err) { 
+      alert("Error marking holiday. Server check karein."); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const handleClearBatch = async () => {
@@ -110,6 +123,7 @@ export default function AdminManagement() {
     finally { setLoading(false); }
   };
 
+  // 3. FIXED EXCEL EXPORT (Naya dynamic file download)
   const handleExport = () => {
     window.open(`${API_BASE}/api/attendance/export?course=${selectedCourse}`, "_blank");
   };
@@ -122,7 +136,7 @@ export default function AdminManagement() {
 
   const handleSwipe = (status: "Present" | "Absent") => {
     const currentStudent = students[currentIndex];
-    const newEntry = { studentId: currentStudent._id, status: status.toUpperCase() }; // Status capitalized
+    const newEntry = { studentId: currentStudent._id, status: status.toUpperCase() }; 
     const updatedSession = [...attendanceSession, newEntry];
     setAttendanceSession(updatedSession);
 
@@ -141,17 +155,23 @@ export default function AdminManagement() {
       const res = await fetch(`${API_BASE}/api/attendance/swipe-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: selectedDate, course: selectedCourse, attendanceData: finalData })
+        body: JSON.stringify({ 
+          date: selectedDate, 
+          course: selectedCourse, 
+          attendanceData: finalData 
+        })
       });
-      if ((await res.json()).success) {
+      const data = await res.json();
+      if (data.success) {
         alert(`✅ Attendance Done!`);
         fetchStudents();
+      } else {
+        alert("❌ Failed: " + data.message);
       }
     } catch (err) { alert("Error submitting attendance"); }
     finally { setLoading(false); }
   };
 
-  // --- RETURN STATEMENT FIX START ---
   return (
     <div className="min-h-screen bg-white text-slate-900 p-6 md:p-10 font-sans relative overflow-hidden">
       <div className="max-w-7xl mx-auto">
@@ -160,8 +180,8 @@ export default function AdminManagement() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4 border-b pb-8">
           <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl shadow-lg bg-blue-600">
-              <Users size={24} className="text-white" />
+            <div className="p-3 rounded-2xl shadow-lg bg-blue-600 text-white">
+              <Users size={24} />
             </div>
             <div>
               <h1 className="text-2xl font-black uppercase italic tracking-tighter text-slate-900">ADMIN PANEL</h1>
@@ -170,7 +190,12 @@ export default function AdminManagement() {
           </div>
           <div className="flex items-center gap-3 bg-slate-50 p-2.5 px-5 rounded-2xl border shadow-inner">
             <Calendar size={14} className="text-blue-600" />
-            <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="bg-transparent border-none outline-none text-[10px] font-black text-blue-600 uppercase" />
+            <input 
+              type="date" 
+              value={selectedDate} 
+              onChange={(e) => setSelectedDate(e.target.value)} 
+              className="bg-transparent border-none outline-none text-[10px] font-black text-blue-600 uppercase" 
+            />
           </div>
         </div>
 
@@ -184,23 +209,31 @@ export default function AdminManagement() {
             <FileUp className="text-emerald-600 group-hover:text-white mb-2" size={24} />
             <span className="text-[9px] font-black uppercase group-hover:text-white">Import Excel</span>
           </button>
-          <button onClick={startAttendance} className={`flex flex-col items-center justify-center p-6 border rounded-[30px] transition-all group ${attendanceDone ? "bg-slate-100 cursor-not-allowed" : "bg-emerald-50 hover:bg-emerald-600"}`}>
+          <button 
+            onClick={startAttendance} 
+            disabled={attendanceDone}
+            className={`flex flex-col items-center justify-center p-6 border rounded-[30px] transition-all group ${attendanceDone ? "bg-slate-100 cursor-not-allowed opacity-60" : "bg-emerald-50 hover:bg-emerald-600"}`}
+          >
             <CheckCircle2 className={`${attendanceDone ? "text-slate-400" : "text-emerald-600 group-hover:text-white"} mb-2`} size={24} />
             <span className={`text-[9px] font-black uppercase ${attendanceDone ? "text-slate-400" : "group-hover:text-white"}`}>
-              {attendanceDone ? "Attendance Done ✅" : "Start Attendance"}
+              {attendanceDone ? "Done ✅" : "Attendance"}
             </span>
           </button>
-          <button onClick={handleHolidayMode} className="flex flex-col items-center justify-center p-6 bg-orange-50 border rounded-[30px] hover:bg-orange-600 group transition-all">
-            <Trees className="text-orange-600 group-hover:text-white mb-2" size={24} />
-            <span className="text-[9px] font-black uppercase group-hover:text-white">Holiday Mode</span>
+          <button 
+            onClick={handleHolidayMode} 
+            disabled={attendanceDone}
+            className={`flex flex-col items-center justify-center p-6 border rounded-[30px] transition-all group ${attendanceDone ? "bg-slate-100 cursor-not-allowed opacity-60" : "bg-orange-50 hover:bg-orange-600"}`}
+          >
+            <Trees className={`${attendanceDone ? "text-slate-400" : "text-orange-600 group-hover:text-white"} mb-2`} size={24} />
+            <span className={`text-[9px] font-black uppercase ${attendanceDone ? "text-slate-400" : "group-hover:text-white"}`}>Holiday</span>
           </button>
           <button onClick={handleExport} className="flex flex-col items-center justify-center p-6 bg-slate-50 border rounded-[30px] hover:bg-slate-900 group transition-all">
             <FileDown className="text-slate-600 group-hover:text-white mb-2" size={24} />
-            <span className="text-[9px] font-black uppercase group-hover:text-white">Export Excel</span>
+            <span className="text-[9px] font-black uppercase group-hover:text-white">Export</span>
           </button>
           <button onClick={handleClearBatch} className="flex flex-col items-center justify-center p-6 bg-red-50 border rounded-[30px] hover:bg-red-600 group transition-all">
             <Trash2 className="text-red-600 group-hover:text-white mb-2" size={24} />
-            <span className="text-[9px] font-black uppercase group-hover:text-white">Clear Batch</span>
+            <span className="text-[9px] font-black uppercase group-hover:text-white">Clear</span>
           </button>
         </div>
 
