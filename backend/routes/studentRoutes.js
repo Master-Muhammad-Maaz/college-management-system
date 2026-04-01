@@ -23,7 +23,7 @@ router.post("/add", async (req, res) => {
   }
 });
 
-// 2. POWERFUL CLEAR BATCH
+// 2. POWERFUL CLEAR BATCH (Wipes Everything for a Course)
 router.post("/clear-batch-full", async (req, res) => {
   try {
     const { course, pincode } = req.body;
@@ -38,7 +38,7 @@ router.post("/clear-batch-full", async (req, res) => {
   }
 });
 
-// 3. BULK IMPORT
+// 3. BULK IMPORT FROM EXCEL
 router.post("/import", upload.single("file"), async (req, res) => {
   try {
     const { course } = req.body;
@@ -86,7 +86,7 @@ router.post("/import", upload.single("file"), async (req, res) => {
   }
 });
 
-// 4. LIST API
+// 4. LIST STUDENTS
 router.get("/list", async (req, res) => {
   try {
     const { course } = req.query;
@@ -94,61 +94,6 @@ router.get("/list", async (req, res) => {
     res.json({ success: true, students });
   } catch (err) {
     res.status(500).json({ success: false, message: "Load failed" });
-  }
-});
-
-// 5. FINALIZED EXCEL EXPORT (Matches your p/a/h requirement)
-router.get("/export", async (req, res) => {
-  try {
-    const { course } = req.query;
-    
-    const students = await StudentRecord.find({ course }).sort({ srNo: 1 });
-    const attendanceRecords = await Attendance.find({ course });
-
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet(`${course} Attendance`);
-
-    // Unique Dates header ke liye
-    const uniqueDates = [...new Set(attendanceRecords.map(rec => rec.date))].sort();
-
-    // Headers set karein
-    const headers = ["sr.no", "student name", ...uniqueDates, "total holiday's", "total present days", "total apsent days", "average percentgae"];
-    const headerRow = worksheet.addRow(headers);
-    headerRow.font = { bold: true };
-
-    // Data rows
-    students.forEach((student) => {
-      let present = 0, absent = 0, holiday = 0;
-      const rowData = [student.srNo, student.name];
-
-      uniqueDates.forEach((date) => {
-        const record = attendanceRecords.find(r => r.date === date);
-        const studentStatus = record?.attendanceData.find(a => a.studentId.toString() === student._id.toString());
-        
-        let status = "-"; 
-        if (record?.isHoliday) {
-          status = "h";
-          holiday++;
-        } else if (studentStatus) {
-          status = studentStatus.status === "Present" ? "p" : "a";
-          if (status === "p") present++; else absent++;
-        }
-        rowData.push(status);
-      });
-
-      const totalActiveDays = present + absent;
-      const percentage = totalActiveDays > 0 ? ((present / totalActiveDays) * 100).toFixed(2) + "%" : "0%";
-
-      rowData.push(holiday, present, absent, percentage);
-      worksheet.addRow(rowData);
-    });
-
-    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    res.setHeader("Content-Disposition", `attachment; filename=${course}_Attendance.xlsx`);
-    await workbook.xlsx.write(res);
-    res.end();
-  } catch (err) {
-    res.status(500).send("Export failed: " + err.message);
   }
 });
 
