@@ -8,108 +8,80 @@ const ExcelJS = require("exceljs");
 router.post("/swipe-session", async (req, res) => {
   try {
     const { date, course, attendanceData } = req.body; 
+    
+    // Debugging ke liye log
+    console.log("Saving Attendance for:", date, course);
+
+    if (!date || !course || !attendanceData) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
     const update = {
       date,
       course,
       isHoliday: false,
       attendanceData: attendanceData.map(item => ({
         studentId: item.studentId,
-        status: item.status.toUpperCase() // Hamesha PRESENT/ABSENT save hoga
+        status: item.status.toUpperCase() 
       }))
     };
-    // Unique entry per date and course
-    await Attendance.findOneAndUpdate({ date, course }, update, { upsert: true });
+
+    const result = await Attendance.findOneAndUpdate({ date, course }, update, { upsert: true, new: true });
+    console.log("Save Success:", result._id);
+    
     res.json({ success: true, message: "Attendance updated!" });
   } catch (err) { 
-    res.status(500).json({ success: false, message: "Error saving attendance: " + err.message }); 
+    console.error("Database Error:", err.message);
+    res.status(500).json({ success: false, message: err.message }); 
   }
 });
 
-// 2. SMART EXCEL EXPORT (Dynamic Dates & Full Status)
+// 2. SMART EXCEL EXPORT
 router.get("/export", async (req, res) => {
   try {
     const { course } = req.query; 
-    
-    // Data fetch karein
     const students = await StudentRecord.find({ course }).sort({ srNo: 1 });
     const attendanceRecords = await Attendance.find({ course }).sort({ date: 1 });
     
-    // Unique dates nikaalein jo columns banenge
-    const allDates = [...new Set(attendanceRecords.map(r => r.date))].sort();
+    // Yahan check karein ke records mil rahe hain ya nahi
+    const allDates = [...new Set(attendanceRecords.map(r => r.date))].filter(Boolean).sort();
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(`${course} Report`);
 
-    // --- ROW 1: MAIN HEADERS ---
-    let headers = [
-      "SR. NO", 
-      "STUDENT NAME", 
-      ...allDates, 
-      "TOTAL HOLIDAYS", 
-      "TOTAL PRESENT", 
-      "TOTAL ABSENT", 
-      "PERCENTAGE"
-    ];
+    // Headers Setup
+    let headers = ["SR. NO", "STUDENT NAME", ...allDates, "TOTAL HOLIDAYS", "TOTAL PRESENT", "TOTAL ABSENT", "PERCENTAGE"];
     const headerRow = worksheet.addRow(headers);
     headerRow.font = { bold: true };
-    headerRow.alignment = { horizontal: 'center' };
 
-    // --- ROW 2: SUB-HEADERS (Status Indicator) ---
-    // Jaisa image_9e707e.png mein tha: p/a/h indicator
-    let subHeader = ["", "STATUS"];
-    allDates.forEach(() => subHeader.push("p/a/h")); 
-    const subHeaderRow = worksheet.addRow(subHeader);
-    subHeaderRow.font = { italic: true, size: 9 };
-
-    // --- DATA ROWS ---
     students.forEach(student => {
       let pCount = 0, aCount = 0, hCount = 0;
       let rowData = [student.srNo, student.name];
 
       allDates.forEach(date => {
-        const dayRecord = attendanceRecords.find(r => r.date === date);
-        const sStatus = dayRecord?.attendanceData.find(at => 
-          at.studentId?.toString() === student._id.toString()
-        );
+        const record = attendanceRecords.find(r => r.date === date);
+        const sStatus = record?.attendanceData.find(at => at.studentId?.toString() === student._id.toString());
         
-        if (dayRecord?.isHoliday) {
-          rowData.push("HOLIDAY"); 
-          hCount++;
+        if (record?.isHoliday) {
+          rowData.push("H"); hCount++;
         } else if (sStatus) {
           const status = sStatus.status.toUpperCase();
-          rowData.push(status); // "PRESENT" ya "ABSENT" fill hoga
-          if (status === "PRESENT") pCount++; 
-          else if (status === "ABSENT") aCount++;
-        } else {
-          rowData.push("-"); 
-        }
+          rowData.push(status === "PRESENT" ? "P" : "A");
+          if (status === "PRESENT") pCount++; else aCount++;
+        } else { rowData.push("-"); }
       });
 
-      // Percentage Calculate karein
-      const totalDays = pCount + aCount;
-      const perc = totalDays > 0 ? `${((pCount / totalDays) * 100).toFixed(2)}%` : "0%";
-      
-      // Totals add karein
+      const total = pCount + aCount;
+      const perc = total > 0 ? `${((pCount / total) * 100).toFixed(2)}%` : "0%";
       rowData.push(hCount, pCount, aCount, perc);
       worksheet.addRow(rowData);
     });
 
-    // Formatting: Column width adjust karein
-    worksheet.columns.forEach((col, index) => {
-      if (index === 1) col.width = 30; // Student Name bada rakhein
-      else col.width = 18; // Dates aur totals ke liye space
-    });
-
-    // Excel Download headers
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.setHeader("Content-Disposition", `attachment; filename=${course}_Report.xlsx`);
-    
     await workbook.xlsx.write(res);
     res.end();
-
-  } catch (err) {
-    res.status(500).send("Export Error: " + err.message);
-  }
+  } catch (err) { res.status(500).send(err.message); }
 });
 
 module.exports = router;
