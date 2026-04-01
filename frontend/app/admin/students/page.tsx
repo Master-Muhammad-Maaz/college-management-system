@@ -3,8 +3,8 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion"
 import { 
   Users, UserPlus, Loader2, FileDown, 
-  CalendarDays, CheckCircle2, Calendar, Trees, 
-  ChevronRight, X, ArrowUp, ArrowDown, Trash2, FolderPlus, Folder
+  CheckCircle2, Calendar, Trees, 
+  X, ArrowUp, ArrowDown, Trash2 
 } from "lucide-react"
 import { AddStudentModal } from "../../../components/AddStudentModal";
 
@@ -23,7 +23,6 @@ export default function AdminManagement() {
   const API_BASE = "https://college-management-system-ae1l.onrender.com";
 
   // Motion Values for Swipe Logic
-  const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotateX = useTransform(y, [-200, 200], [25, -25]);
   const opacity = useTransform(y, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
@@ -32,8 +31,7 @@ export default function AdminManagement() {
     try {
       const res = await fetch(`${API_BASE}/api/attendance/today/${selectedDate}/${selectedCourse}`);
       const data = await res.json();
-      if (data.success && data.records.length > 0) setAttendanceDone(true);
-      else setAttendanceDone(false);
+      setAttendanceDone(data.success && data.records.length > 0);
     } catch (err) { console.error(err); }
   };
 
@@ -73,14 +71,19 @@ export default function AdminManagement() {
   };
 
   const handleClearBatch = async () => {
-    if (!confirm(`⚠️ DANGER: This will delete ALL attendance records for ${selectedCourse}. This cannot be undone! Type 'DELETE' to confirm?`)) return;
+    const pin = prompt(`⚠️ DANGER: This will delete ALL Students & Attendance for ${selectedCourse}. Enter PIN (1234) to confirm:`);
+    if (pin !== "1234") return pin === null ? null : alert("Incorrect PIN! Action Cancelled.");
     
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/attendance/clear-batch?course=${selectedCourse}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/api/students/clear-batch-full`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ course: selectedCourse, pincode: pin })
+      });
       const data = await res.json();
       if (data.success) {
-        alert("🗑️ Batch Records Cleared!");
+        alert(`🗑️ ${selectedCourse} has been completely cleared!`);
         fetchStudents();
       }
     } catch (err) { alert("Error clearing records"); }
@@ -107,7 +110,7 @@ export default function AdminManagement() {
 
     if (currentIndex < students.length - 1) {
       setCurrentIndex(prev => prev + 1);
-      y.set(0); // Reset position for next card
+      y.set(0); 
     } else {
       setIsSwipeMode(false);
       submitAttendance(updatedSession);
