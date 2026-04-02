@@ -7,14 +7,25 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white text-slate-900 overflow-x-hidden relative font-sans selection:bg-blue-100">
       
+      {/* 0. VERTICAL UPWARD MARQUEE (LEFT SIDE) */}
+      <div className="fixed left-0 top-0 h-full w-6 md:w-8 bg-slate-900 z-[60] flex flex-col items-center justify-center overflow-hidden border-r border-slate-800 shadow-2xl">
+        <div className="flex flex-col whitespace-nowrap animate-vertical-marquee">
+          {[1, 2, 3, 4].map((i) => (
+            <span key={i} className="text-[8px] md:text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] [writing-mode:vertical-rl] rotate-180 py-20 opacity-80">
+              NEXT UPGRADE EXPECTED BY 2029 ——— SYSTEM STABILITY VERIFIED ——— 
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* DYNAMIC BACKGROUND */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
+      <div className="absolute inset-0 z-0 pointer-events-none pl-8">
         <div className="absolute top-[-5%] right-[-5%] w-[300px] md:w-[700px] h-[300px] md:h-[700px] bg-blue-50/60 rounded-full blur-[80px] md:blur-[120px]"></div>
         <div className="absolute bottom-[-5%] left-[-5%] w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-indigo-50/50 rounded-full blur-[70px] md:blur-[100px]"></div>
       </div>
 
       {/* 1. FLOATING ANNOUNCEMENT LINE */}
-      <div className="relative z-50 bg-slate-900 py-2 md:py-2.5 overflow-hidden border-b border-slate-800">
+      <div className="relative z-50 bg-slate-900 py-2 md:py-2.5 overflow-hidden border-b border-slate-800 ml-6 md:ml-8">
         <div className="flex whitespace-nowrap animate-marquee">
           <span className="text-[9px] md:text-xs font-bold text-blue-400 uppercase tracking-[0.2em] px-4">
             This project, titled “CORE-MATRIX REPO”, has been successfully completed by Mohammed Maaz Mohammed Niyaz as part of the M.Sc. II (Computer Science) curriculum for the academic year 2025–26. ——— 
@@ -25,7 +36,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 flex flex-col items-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 flex flex-col items-center ml-6 md:ml-8">
         
         {/* 2. COLLEGE DETAIL BOX */}
         <motion.div 
@@ -48,7 +59,7 @@ export default function Home() {
           </p>
         </motion.div>
 
-        {/* 3. HERO TITLES - FIXED CUTTING ISSUE */}
+        {/* 3. HERO TITLES */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -141,7 +152,9 @@ export default function Home() {
 
       <style jsx global>{`
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        @keyframes vertical-marquee { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
         .animate-marquee { animation: marquee 35s linear infinite; }
+        .animate-vertical-marquee { animation: vertical-marquee 20s linear infinite; }
       `}</style>
     </div>
   )
