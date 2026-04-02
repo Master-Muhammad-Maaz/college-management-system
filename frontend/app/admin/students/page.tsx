@@ -20,7 +20,6 @@ export default function AdminManagement() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const courses = ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II"]
   
   // Base URL for API
   const API_BASE = "https://college-management-system-ae1l.onrender.com";
@@ -34,7 +33,6 @@ export default function AdminManagement() {
     try {
       const res = await fetch(`${API_BASE}/api/attendance/today/${selectedDate}/${selectedCourse}`);
       const data = await res.json();
-      // Naye model ke hisaab se check karein agar record exists karta hai
       setAttendanceDone(data.success && data.record);
     } catch (err) { console.error("Status Check Error:", err); }
   };
@@ -79,7 +77,6 @@ export default function AdminManagement() {
     }
   };
 
-  // 2. FIXED HOLIDAY MODE (Naya Route Call Karega)
   const handleHolidayMode = async () => {
     if (attendanceDone) return alert("Attendance or Holiday already marked for today!");
     if (!confirm(`Mark ${selectedDate} as Holiday for ${selectedCourse}?`)) return;
@@ -123,7 +120,6 @@ export default function AdminManagement() {
     finally { setLoading(false); }
   };
 
-  // 3. FIXED EXCEL EXPORT (Naya dynamic file download)
   const handleExport = () => {
     window.open(`${API_BASE}/api/attendance/export?course=${selectedCourse}`, "_blank");
   };
@@ -235,15 +231,6 @@ export default function AdminManagement() {
             <Trash2 className="text-red-600 group-hover:text-white mb-2" size={24} />
             <span className="text-[9px] font-black uppercase group-hover:text-white">Clear</span>
           </button>
-        </div>
-
-        {/* Course Tabs */}
-        <div className="flex gap-2 mb-8 overflow-x-auto no-scrollbar pb-2">
-          {courses.map(c => (
-            <button key={c} onClick={() => setSelectedCourse(c)} className={`px-6 py-2 rounded-full text-[9px] font-black uppercase border transition-all shrink-0 ${selectedCourse === c ? "bg-blue-600 text-white shadow-lg" : "bg-white text-slate-400"}`}>
-              {c}
-            </button>
-          ))}
         </div>
 
         {/* Students Table */}
