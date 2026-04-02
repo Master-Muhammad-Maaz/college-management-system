@@ -1,7 +1,15 @@
 "use client"
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { BookOpen, Calendar, FileText, LayoutDashboard, LogOut, User } from "lucide-react"
+import { 
+  BookOpen, 
+  Calendar, 
+  FileText, 
+  LayoutDashboard, 
+  LogOut, 
+  User, 
+  FolderIcon // Naya icon folders ke liye
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export default function StudentDashboard() {
@@ -10,9 +18,17 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     const data = localStorage.getItem("studentData")
-    if (!data) router.push("/student-login")
-    else setStudent(JSON.parse(data))
-  }, [])
+    if (!data || data === "undefined") {
+      router.push("/student-login")
+    } else {
+      try {
+        setStudent(JSON.parse(data))
+      } catch (e) {
+        localStorage.removeItem("studentData")
+        router.push("/student-login")
+      }
+    }
+  }, [router])
 
   const handleLogout = () => {
     localStorage.clear()
@@ -36,7 +52,7 @@ export default function StudentDashboard() {
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Student Portal</p>
             </div>
           </div>
-          <button onClick={handleLogout} className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all">
+          <button onClick={handleLogout} className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all shadow-sm border border-red-100">
             <LogOut size={20} />
           </button>
         </div>
@@ -49,31 +65,73 @@ export default function StudentDashboard() {
           <div className="text-center md:text-left">
             <h2 className="text-3xl font-black text-[#0f172a] uppercase tracking-tighter">{student.name}</h2>
             <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4">
-              <span className="px-5 py-2 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest">{student.course}</span>
-              <span className="px-5 py-2 bg-white text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-200">Roll: {student.srNo}</span>
+              <span className="px-5 py-2 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-200">
+                {student.course}
+              </span>
+              <span className="px-5 py-2 bg-white text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-200">
+                Roll No: {student.srNo}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Action Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-100/50 group hover:border-blue-200 transition-all cursor-pointer">
-             <div className="p-4 bg-blue-50 text-blue-600 w-fit rounded-2xl mb-6 group-hover:bg-blue-600 group-hover:text-white transition-all"><BookOpen size={24} /></div>
+        {/* Updated Action Grid with Folder Logic */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          {/* Digital Notes (Folders yahan dikhenge) */}
+          <motion.div 
+            whileHover={{ y: -5 }}
+            onClick={() => router.push("/student/notes")}
+            className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-100/50 group hover:border-indigo-200 transition-all cursor-pointer"
+          >
+             <div className="p-4 bg-indigo-50 text-indigo-600 w-fit rounded-2xl mb-6 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+               <FolderIcon size={24} />
+             </div>
+             <h3 className="text-sm font-black uppercase tracking-widest text-[#0f172a]">Digital Notes</h3>
+             <p className="text-xs text-slate-400 mt-2 font-medium italic">View study materials & folders.</p>
+          </motion.div>
+
+          <motion.div 
+            whileHover={{ y: -5 }}
+            onClick={() => router.push("/student/assignments")}
+            className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-100/50 group hover:border-blue-200 transition-all cursor-pointer"
+          >
+             <div className="p-4 bg-blue-50 text-blue-600 w-fit rounded-2xl mb-6 group-hover:bg-blue-600 group-hover:text-white transition-all">
+               <BookOpen size={24} />
+             </div>
              <h3 className="text-sm font-black uppercase tracking-widest text-[#0f172a]">Assignments</h3>
-             <p className="text-xs text-slate-400 mt-2 font-medium">Access your shared resources.</p>
-          </div>
+             <p className="text-xs text-slate-400 mt-2 font-medium">Access shared resources.</p>
+          </motion.div>
 
-          <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-100/50 group hover:border-blue-200 transition-all cursor-pointer">
-             <div className="p-4 bg-emerald-50 text-emerald-600 w-fit rounded-2xl mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-all"><Calendar size={24} /></div>
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-100/50 group hover:border-emerald-200 transition-all cursor-pointer"
+          >
+             <div className="p-4 bg-emerald-50 text-emerald-600 w-fit rounded-2xl mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+               <Calendar size={24} />
+             </div>
              <h3 className="text-sm font-black uppercase tracking-widest text-[#0f172a]">Attendance</h3>
-             <p className="text-xs text-slate-400 mt-2 font-medium">Check your monthly report.</p>
-          </div>
+             <p className="text-xs text-slate-400 mt-2 font-medium">Check monthly report.</p>
+          </motion.div>
 
-          <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-100/50 group hover:border-blue-200 transition-all cursor-pointer">
-             <div className="p-4 bg-orange-50 text-orange-600 w-fit rounded-2xl mb-6 group-hover:bg-orange-600 group-hover:text-white transition-all"><FileText size={24} /></div>
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-100/50 group hover:border-orange-200 transition-all cursor-pointer"
+          >
+             <div className="p-4 bg-orange-50 text-orange-600 w-fit rounded-2xl mb-6 group-hover:bg-orange-600 group-hover:text-white transition-all">
+               <FileText size={24} />
+             </div>
              <h3 className="text-sm font-black uppercase tracking-widest text-[#0f172a]">Internal Marks</h3>
              <p className="text-xs text-slate-400 mt-2 font-medium">View assessment results.</p>
-          </div>
+          </motion.div>
+
+        </div>
+
+        {/* Footer */}
+        <div className="mt-16 text-center">
+          <p className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.4em]">
+            College Management System &copy; 2026
+          </p>
         </div>
 
       </div>
