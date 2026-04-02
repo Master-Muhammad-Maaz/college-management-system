@@ -4,13 +4,12 @@ const cors = require("cors");
 const path = require("path"); 
 const fs = require("fs");    
 
-// --- ROUTES IMPORTS ---
+// Routes Imports
 const authRoutes = require("./routes/authRoutes");
 const studentRoutes = require("./routes/studentRoutes"); 
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const assignmentRoutes = require("./routes/assignments"); 
-const repoRoutes = require("./routes/repoRoutes");
-const contentRoutes = require("./routes/contentRoutes"); // Drive Logic
+const repoRoutes = require("./routes/repoRoutes"); // <-- [ZAROORI] Ise add kiya
 
 const app = express();
 
@@ -34,16 +33,14 @@ app.use(cors({
   credentials: true
 }));
 
-// 2. MIDDLEWARE
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// 2. Middleware
+app.use(express.json());
 
 // STATIC FOLDERS SETUP
 const uploadDirs = [
   path.join(__dirname, 'uploads'),
   path.join(__dirname, 'uploads', 'assignments'),
-  path.join(__dirname, 'uploads', 'repository'),
-  path.join(__dirname, 'uploads', 'portal')
+  path.join(__dirname, 'uploads', 'repository') // <-- [ZAROORI] Ise add kiya
 ];
 
 uploadDirs.forEach(dir => {
@@ -53,28 +50,25 @@ uploadDirs.forEach(dir => {
 });
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// 3. DATABASE CONNECTION
+// 3. MongoDB Connection
 const MONGO_URI = process.env.MONGODB_URI || "mongodb+srv://mohammadmaaz8262:87654321@maaz123.eu2rnw5.mongodb.net/college_db?retryWrites=true&w=majority";
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected Successfully"))
   .catch(err => console.error("❌ MongoDB Connection Error:", err.message));
 
-// 4. API ROUTES
+// 4. API Routes
 app.get("/", (req, res) => {
     res.status(200).send("College Management System API is active.");
 });
 
-// Purana Logic & Naya Portal Logic (Dono handle ho rahe hain)
 app.use("/api/auth", authRoutes); 
-app.use("/api/portal-auth", authRoutes); // Portal 2.0 ke liye
 app.use("/api/students", studentRoutes); 
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/assignments", assignmentRoutes); 
-app.use("/api", repoRoutes);
-app.use("/api/content", contentRoutes);
+app.use("/api", repoRoutes); // <-- [ZAROORI] Digital Notes ke liye ise add kiya
 
-// 5. GLOBAL ERROR HANDLER
+// 5. Global Error Handler
 app.use((err, req, res, next) => {
   console.error("Global Error:", err.stack);
   res.status(500).json({ success: false, message: "Internal Server Error", detail: err.message });
