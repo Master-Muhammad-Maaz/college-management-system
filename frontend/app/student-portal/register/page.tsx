@@ -18,7 +18,6 @@ export default function StudentRegister() {
     profilePic: ""
   })
 
-  // Handle Image Selection & Preview
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -36,7 +35,8 @@ export default function StudentRegister() {
     e.preventDefault()
     setLoading(true)
     try {
-      const res = await fetch("https://college-management-system-ae1l.onrender.com/api/auth/register", {
+      // URL UPDATED TO PORTAL-AUTH
+      const res = await fetch("https://college-management-system-ae1l.onrender.com/api/portal-auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
@@ -68,7 +68,6 @@ export default function StudentRegister() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Photo Upload Section */}
           <div className="flex flex-col items-center mb-8">
             <div className="relative group">
               <div className="w-24 h-24 rounded-[35px] bg-slate-100 border-2 border-dashed border-slate-200 overflow-hidden flex items-center justify-center transition-all group-hover:border-blue-400">
@@ -87,46 +86,42 @@ export default function StudentRegister() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Full Name */}
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Full Name</label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                 <input 
-                  type="text" required placeholder="John Doe"
+                  type="text" required placeholder="Full Name"
                   className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
                 />
               </div>
             </div>
 
-            {/* Email */}
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                 <input 
-                  type="email" required placeholder="john@example.com"
+                  type="email" required placeholder="email@example.com"
                   className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                 />
               </div>
             </div>
 
-            {/* Roll Number */}
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Roll Number</label>
               <div className="relative">
                 <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                 <input 
-                  type="text" required placeholder="e.g. 2026-01"
+                  type="text" required placeholder="Roll No"
                   className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   onChange={(e) => setFormData({...formData, rollNo: e.target.value})}
                 />
               </div>
             </div>
 
-            {/* Course Selection */}
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Select Course</label>
               <div className="relative">
@@ -146,9 +141,8 @@ export default function StudentRegister() {
             </div>
           </div>
 
-          {/* Password */}
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Secure Password</label>
+            <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Password</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
               <input 
