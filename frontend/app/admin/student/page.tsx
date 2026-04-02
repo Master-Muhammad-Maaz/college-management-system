@@ -6,7 +6,8 @@ import {
   CheckCircle2, Calendar, Trees, 
   X, ArrowUp, ArrowDown, Trash2 
 } from "lucide-react"
-// FIX: Path updated according to your structure
+
+// FIX: Path corrected to match your directory structure
 import { AddStudentModal } from "@/components/AddStudentModal";
 
 export default function AdminManagement() {
@@ -155,6 +156,7 @@ export default function AdminManagement() {
           </div>
         </div>
 
+        {/* Action Grid */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
           <button onClick={() => setShowModal(true)} className="flex flex-col items-center justify-center p-6 bg-blue-50 border rounded-[30px] hover:bg-blue-600 group transition-all">
             <UserPlus className="text-blue-600 group-hover:text-white mb-2" size={24} />
@@ -182,21 +184,48 @@ export default function AdminManagement() {
           </button>
         </div>
 
+        {/* Course Navigation */}
         <div className="flex gap-2 mb-8 overflow-x-auto no-scrollbar pb-2">
           {courses.map(c => (
             <button key={c} onClick={() => setSelectedCourse(c)} className={`px-6 py-2 rounded-full text-[9px] font-black uppercase border transition-all shrink-0 ${selectedCourse === c ? "bg-blue-600 text-white shadow-lg" : "bg-white text-slate-400"}`}>{c}</button>
           ))}
         </div>
 
+        {/* Student Table */}
         <div className="bg-white rounded-[40px] border shadow-2xl overflow-hidden min-h-[400px] relative p-8">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Strength: {students.length}</p>
             {students.length > 0 ? (
               <table className="w-full mt-6 text-left border-collapse">
-                <thead><tr className="border-b"><th className="p-4 text-[9px] font-black uppercase text-slate-400">SR</th><th className="p-4 text-[9px] font-black uppercase text-slate-400">Name</th><th className="p-4 text-[9px] font-black uppercase text-slate-400 text-right">Status</th></tr></thead>
-                <tbody>{students.map((s: any) => (<tr key={s._id} className="border-b hover:bg-slate-50 transition-colors"><td className="p-4 font-bold text-blue-600 text-[11px]">#{s.srNo}</td><td className="p-4 font-black text-slate-700 text-[11px] uppercase">{s.name}</td><td className="p-4 text-right"><span className="text-[8px] font-black uppercase bg-slate-100 px-3 py-1 rounded-full text-slate-400">Active</span></td></tr>))}</tbody>
+                <thead>
+                  <tr className="border-b">
+                    <th className="p-4 text-[9px] font-black uppercase text-slate-400">SR</th>
+                    <th className="p-4 text-[9px] font-black uppercase text-slate-400">Name</th>
+                    <th className="p-4 text-[9px] font-black uppercase text-slate-400 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map((s: any) => (
+                    <tr key={s._id} className="border-b hover:bg-slate-50 transition-colors">
+                      <td className="p-4 font-bold text-blue-600 text-[11px]">#{s.srNo}</td>
+                      <td className="p-4 font-black text-slate-700 text-[11px] uppercase">{s.name}</td>
+                      <td className="p-4 text-right">
+                        <span className="text-[8px] font-black uppercase bg-slate-100 px-3 py-1 rounded-full text-slate-400">Active</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
-            ) : (<div className="flex flex-col items-center justify-center py-20 text-slate-300"><Trash2 size={48} className="mb-4 opacity-20" /><p className="text-[10px] font-black uppercase tracking-widest">No Students Found</p></div>)}
-            {loading && <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex justify-center items-center z-50"><Loader2 className="animate-spin text-blue-600" size={40} /></div>}
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 text-slate-300">
+                <Trash2 size={48} className="mb-4 opacity-20" />
+                <p className="text-[10px] font-black uppercase tracking-widest">No Students Found</p>
+              </div>
+            )}
+            {loading && (
+              <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex justify-center items-center z-50">
+                <Loader2 className="animate-spin text-blue-600" size={40} />
+              </div>
+            )}
         </div>
       </div>
 
@@ -221,7 +250,9 @@ export default function AdminManagement() {
                 style={{ y, rotateX, opacity }}
                 className="w-full h-full bg-white rounded-[60px] flex flex-col items-center justify-center p-10 text-center border-[6px] border-white relative overflow-hidden"
               >
-                <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-10"><span className="text-blue-600 font-black text-4xl">{students[currentIndex].name.charAt(0)}</span></div>
+                <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-10">
+                  <span className="text-blue-600 font-black text-4xl">{students[currentIndex].name.charAt(0)}</span>
+                </div>
                 <div className="flex flex-col gap-4 w-full">
                   <button onClick={() => handleSwipe("Present")} className="w-full py-4 bg-emerald-500 text-white rounded-3xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2"><ArrowUp size={20}/> Present</button>
                   <button onClick={() => handleSwipe("Absent")} className="w-full py-4 bg-red-500 text-white rounded-3xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2"><ArrowDown size={20}/> Absent</button>
