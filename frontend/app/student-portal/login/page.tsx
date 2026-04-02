@@ -13,7 +13,8 @@ export default function StudentLogin() {
     e.preventDefault()
     setLoading(true)
     try {
-      const res = await fetch("https://college-management-system-ae1l.onrender.com/api/auth/login", {
+      // URL UPDATED TO PORTAL-AUTH
+      const res = await fetch("https://college-management-system-ae1l.onrender.com/api/portal-auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
@@ -21,11 +22,8 @@ export default function StudentLogin() {
       const data = await res.json()
       
       if (data.success) {
-        // Session Save: Isme Name, Course aur Photo sab save ho jayega
         localStorage.setItem("studentAuth", JSON.stringify(data.student))
-        
-        // Automatic Redirect based on Course
-        alert(`Welcome ${data.student.name}! Redirecting to ${data.student.course} Dashboard...`)
+        alert(`Welcome ${data.student.name}!`)
         router.push("/student-portal/dashboard") 
       } else {
         alert(data.message)
@@ -49,11 +47,10 @@ export default function StudentLogin() {
             <ShieldCheck size={32} />
           </div>
           <h1 className="text-3xl font-black italic tracking-tighter uppercase text-slate-900">Student Portal</h1>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Enter credentials to access {formData.email ? 'your' : 'secure'} dashboard</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Enter credentials</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email Field */}
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Email Address</label>
             <div className="relative">
@@ -66,7 +63,6 @@ export default function StudentLogin() {
             </div>
           </div>
 
-          {/* Password Field */}
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Password</label>
             <div className="relative">
