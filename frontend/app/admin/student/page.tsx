@@ -1,4 +1,3 @@
-//testing
 "use client"
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion"
