@@ -12,7 +12,7 @@ export default function Home() {
         <div className="flex flex-col whitespace-nowrap animate-vertical-marquee">
           {[1, 2, 3, 4].map((i) => (
             <span key={i} className="text-[8px] md:text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] [writing-mode:vertical-rl] rotate-180 py-20 opacity-80">
-              NEXT UPGRADE EXPECTED BY 2029 ——— SYSTEM STABILITY VERIFIED ——— 
+              UPGRADE: V2.0 AURORA (EXPECTED 2029) ——— SYSTEM STABILITY VERIFIED ——— 
             </span>
           ))}
         </div>
@@ -103,10 +103,9 @@ export default function Home() {
         {/* 5. FACULTY SECTION */}
         <div className="w-full max-w-6xl text-center mb-12 md:mb-16">
           <h2 className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-slate-400 mb-6 md:mb-8 italic">Academic Leadership & Guidance</h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             {[
-              { name: "Ms. R. S. Kale", role: "Head of Dept", color: "text-blue-600" },
-              { name: "Mr. A. S. Jadhao", role: "Assistant Professor", color: "text-indigo-600" },
+              { name: "Mrs. R. P. Pundkar", role: "Head of Dept", color: "text-blue-600" },
               { name: "Dr. A. B. Dube", role: "Assistant Professor", color: "text-slate-500" },
               { name: "Dr. S. M. Chavan", role: "Assistant Professor", color: "text-slate-500" },
               { name: "Ms. M. R. Gudade", role: "Assistant Professor", color: "text-slate-500" }
@@ -120,9 +119,26 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 6. UPDATED FOOTER */}
+        {/* 6. RE-ORDERED FOOTER */}
         <footer className="w-full py-8 md:py-10 border-t border-slate-100 grid grid-cols-1 md:grid-cols-4 items-center gap-6 md:gap-4">
-          <div className="flex items-center gap-3 justify-center md:justify-start">
+          
+          {/* 1. SUPERVISOR */}
+          <div className="text-center border-b md:border-b-0 md:border-r border-slate-100 pb-4 md:pb-0">
+            <p className="text-[7px] font-black uppercase tracking-widest text-purple-600 mb-0.5">Supervisor</p>
+            <p className="text-xs font-black text-slate-900">Mrs. R. P. Pundkar</p>
+          </div>
+
+          {/* 2. PROJECT GUIDE */}
+          <div className="flex items-center gap-3 justify-center border-b md:border-b-0 md:border-r border-slate-100 pb-4 md:pb-0">
+            <div className="text-right">
+              <p className="text-[7px] font-black uppercase tracking-widest text-indigo-600 mb-0.5">Project Guide</p>
+              <p className="text-xs font-black text-slate-900 italic">Mr. A. S. Jadhao</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center font-black text-blue-600 text-lg border border-blue-100">J</div>
+          </div>
+
+          {/* 3. DEVELOPER */}
+          <div className="flex items-center gap-3 justify-center border-b md:border-b-0 md:border-r border-slate-100 pb-4 md:pb-0">
             <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center font-black text-white text-lg">M</div>
             <div className="text-left">
               <p className="text-[7px] font-black uppercase tracking-widest text-blue-600 mb-0.5">Developer</p>
@@ -130,23 +146,12 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="text-center">
+          {/* 4. COPYRIGHT */}
+          <div className="text-center md:text-right">
             <p className="text-slate-400 font-black text-[8px] uppercase tracking-[0.1em]">© 2026 Dept. of Comp. Science</p>
-            <p className="text-slate-900 font-black text-[8px] uppercase tracking-widest">v1.0 REPO</p>
+            <p className="text-slate-900 font-black text-[8px] uppercase tracking-widest">v2.0 AURORA</p>
           </div>
 
-          <div className="text-center border-y md:border-y-0 md:border-x border-slate-100 py-4 md:py-0">
-            <p className="text-[7px] font-black uppercase tracking-widest text-purple-600 mb-0.5">Supervisor</p>
-            <p className="text-xs font-black text-slate-900">Mrs. R. P. Pundkar</p>
-          </div>
-
-          <div className="flex items-center gap-3 justify-center md:justify-end">
-            <div className="text-right">
-              <p className="text-[7px] font-black uppercase tracking-widest text-indigo-600 mb-0.5">Project Guide</p>
-              <p className="text-xs font-black text-slate-900 italic">Mr. A. S. Jadhao</p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center font-black text-blue-600 text-lg border border-blue-100">J</div>
-          </div>
         </footer>
       </div>
 
