@@ -56,8 +56,8 @@ export default function Home() {
         {/* ACCESS PORTALS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl px-4">
           
-          {/* STUDENT HUB CARD - NOW LINKED TO NEW PORTAL */}
-          <Link href="/student-portal/login" className="group">
+          {/* STUDENT HUB CARD */}
+          <div className="group">
             <motion.div 
               whileHover={{ y: -5 }}
               className="bg-white border border-slate-200 p-8 rounded-[40px] shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-300 h-full flex flex-col items-center text-center"
@@ -67,17 +67,24 @@ export default function Home() {
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">Student Hub</h3>
               <p className="text-xs text-slate-500 font-medium uppercase tracking-widest mb-8">Access assignments & resources</p>
-              <div className="w-full bg-slate-900 text-white py-4 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm tracking-wide group-hover:bg-blue-600 transition-colors">
-                Student Login <ChevronRight size={18} />
-              </div>
-              {/* Optional: Chota sa register link */}
-              <p className="mt-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">
-                New Student? <span className="underline">Register Now</span>
-              </p>
-            </motion.div>
-          </Link>
+              
+              {/* Login Button */}
+              <Link href="/student-portal/login" className="w-full">
+                <div className="w-full bg-slate-900 text-white py-4 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm tracking-wide group-hover:bg-blue-600 transition-colors">
+                  Student Login <ChevronRight size={18} />
+                </div>
+              </Link>
 
-          {/* ADMIN PORTAL CARD - UNCHANGED */}
+              {/* Registration Link Update */}
+              <Link href="/student-portal/register" className="mt-4">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors cursor-pointer">
+                  New Student? <span className="underline decoration-blue-500/30 decoration-2 underline-offset-4">Register Now</span>
+                </p>
+              </Link>
+            </motion.div>
+          </div>
+
+          {/* ADMIN PORTAL CARD */}
           <Link href="/admin-login" className="group">
             <motion.div 
               whileHover={{ y: -5 }}
@@ -95,7 +102,7 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* Leadership Section - UNCHANGED */}
+        {/* Leadership Section */}
         <div className="mt-32 w-full max-w-5xl text-center">
           <h2 className="text-xs font-black uppercase tracking-[0.4em] text-blue-600 mb-10">Department Leadership</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -113,7 +120,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Footer - UNCHANGED */}
+        {/* Footer */}
         <footer className="mt-32 mb-16 w-full pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center font-bold text-white text-xl shadow-lg">M</div>
