@@ -1,295 +1,133 @@
 "use client"
-import { useState, useEffect, useRef } from "react"
-import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion"
-import { 
-  Users, UserPlus, Loader2, FileDown, FileUp, 
-  CheckCircle2, Calendar, Trees, 
-  X, ArrowUp, ArrowDown, Trash2 
-} from "lucide-react"
+import { motion } from "framer-motion"
+import Link from "next/link"
+import { ShieldCheck, GraduationCap, ChevronRight, Award } from "lucide-react"
 
-// ✅ FIX: Corrected import path for GitHub/Vercel
-import { AddStudentModal } from "@/components/AddStudentModal";
-
-export default function AdminManagement() {
-  const [students, setStudents] = useState<any[]>([])
-  const [selectedCourse, setSelectedCourse] = useState("B.Sc-I")
-  const [showModal, setShowModal] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [attendanceDone, setAttendanceDone] = useState(false)
-  const [isSwipeMode, setIsSwipeMode] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [attendanceSession, setAttendanceSession] = useState<any[]>([]);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const courses = ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II"]
-  
-  const API_BASE = "https://college-management-system-ae1l.onrender.com";
-
-  const y = useMotionValue(0);
-  const rotateX = useTransform(y, [-200, 200], [25, -25]);
-  const opacity = useTransform(y, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
-
-  const checkAttendanceStatus = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/attendance/today/${selectedDate}/${selectedCourse}`);
-      const data = await res.json();
-      setAttendanceDone(data.success && data.record);
-    } catch (err) { console.error("Status Check Error:", err); }
-  };
-
-  const fetchStudents = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/students/list?course=${selectedCourse}`)
-      const data = await res.json()
-      if (data.success) setStudents(data.students);
-      else setStudents([]); 
-      await checkAttendanceStatus();
-    } catch (err) { console.error("Fetch Students Error:", err); } 
-    finally { setLoading(false); }
-  }
-
-  useEffect(() => {
-    fetchStudents();
-  }, [selectedCourse, selectedDate]);
-
-  const handleImportClick = () => { fileInputRef.current?.click(); };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("course", selectedCourse);
-
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/students/import`, { method: "POST", body: formData });
-      const data = await res.json();
-      if (data.success) {
-        alert(`✅ ${data.count} Students Imported!`);
-        fetchStudents();
-      } else { alert("❌ Import Failed: " + data.message); }
-    } catch (err) { alert("Error uploading file"); } 
-    finally {
-      setLoading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
-  const handleHolidayMode = async () => {
-    if (attendanceDone) return alert("Attendance or Holiday already marked for today!");
-    if (!confirm(`Mark ${selectedDate} as Holiday for ${selectedCourse}?`)) return;
-    
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/attendance/mark-holiday`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: selectedDate, course: selectedCourse })
-      });
-      const data = await res.json();
-      if (data.success) { 
-        alert("✅ Holiday Marked Successfully!"); 
-        fetchStudents(); 
-      } else { alert("❌ Error: " + data.message); }
-    } catch (err) { alert("Error marking holiday."); } 
-    finally { setLoading(false); }
-  };
-
-  const handleClearBatch = async () => {
-    const pin = prompt(`Enter PIN (1234) to CLEAR ${selectedCourse}:`);
-    if (pin !== "1234") return;
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/students/clear-batch-full`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ course: selectedCourse, pincode: pin })
-      });
-      if ((await res.json()).success) {
-        setStudents([]); setAttendanceDone(false);
-        alert(`🗑️ ${selectedCourse} Cleared!`);
-      }
-    } catch (err) { alert("Error clearing records"); }
-    finally { setLoading(false); }
-  };
-
-  const handleExport = () => {
-    window.open(`${API_BASE}/api/attendance/export?course=${selectedCourse}`, "_blank");
-  };
-
-  const startAttendance = () => {
-    if (attendanceDone) return alert("Attendance already marked!");
-    if (students.length === 0) return alert("No students found!");
-    setCurrentIndex(0); setAttendanceSession([]); setIsSwipeMode(true);
-  };
-
-  const handleSwipe = (status: "Present" | "Absent") => {
-    const currentStudent = students[currentIndex];
-    const newEntry = { studentId: currentStudent._id, status: status.toUpperCase() }; 
-    const updatedSession = [...attendanceSession, newEntry];
-    setAttendanceSession(updatedSession);
-
-    if (currentIndex < students.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-      y.set(0); 
-    } else {
-      setIsSwipeMode(false);
-      submitAttendance(updatedSession);
-    }
-  };
-
-  const submitAttendance = async (finalData: any[]) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/attendance/swipe-session`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          date: selectedDate, 
-          course: selectedCourse, 
-          attendanceData: finalData 
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(`✅ Attendance Done!`);
-        fetchStudents();
-      } else { alert("❌ Failed: " + data.message); }
-    } catch (err) { alert("Error submitting attendance"); }
-    finally { setLoading(false); }
-  };
-
+export default function Home() {
   return (
-    <div className="min-h-screen bg-white text-slate-900 p-6 md:p-10 font-sans relative overflow-hidden">
-      <div className="max-w-7xl mx-auto">
-        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls" />
-
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4 border-b pb-8">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl shadow-lg bg-blue-600 text-white">
-              <Users size={24} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-black uppercase italic tracking-tighter text-slate-900">ADMIN PANEL</h1>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{selectedCourse} Management</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 bg-slate-50 p-2.5 px-5 rounded-2xl border shadow-inner">
-            <Calendar size={14} className="text-blue-600" />
-            <input 
-              type="date" 
-              value={selectedDate} 
-              onChange={(e) => setSelectedDate(e.target.value)} 
-              className="bg-transparent border-none outline-none text-[10px] font-black text-blue-600 uppercase" 
-            />
-          </div>
-        </div>
-
-        {/* Action Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
-          <button onClick={() => setShowModal(true)} className="flex flex-col items-center justify-center p-6 bg-blue-50 border rounded-[30px] hover:bg-blue-600 group transition-all">
-            <UserPlus className="text-blue-600 group-hover:text-white mb-2" size={24} />
-            <span className="text-[9px] font-black uppercase group-hover:text-white">Add Student</span>
-          </button>
-          <button onClick={handleImportClick} className="flex flex-col items-center justify-center p-6 bg-emerald-50 border rounded-[30px] hover:bg-emerald-600 group transition-all">
-            <FileUp className="text-emerald-600 group-hover:text-white mb-2" size={24} />
-            <span className="text-[9px] font-black uppercase group-hover:text-white">Import Excel</span>
-          </button>
-          <button onClick={startAttendance} disabled={attendanceDone} className={`flex flex-col items-center justify-center p-6 border rounded-[30px] transition-all group ${attendanceDone ? "bg-slate-100 cursor-not-allowed opacity-60" : "bg-emerald-50 hover:bg-emerald-600"}`}>
-            <CheckCircle2 className={`${attendanceDone ? "text-slate-400" : "text-emerald-600 group-hover:text-white"} mb-2`} size={24} />
-            <span className={`text-[9px] font-black uppercase ${attendanceDone ? "text-slate-400" : "group-hover:text-white"}`}>{attendanceDone ? "Done ✅" : "Attendance"}</span>
-          </button>
-          <button onClick={handleHolidayMode} disabled={attendanceDone} className={`flex flex-col items-center justify-center p-6 border rounded-[30px] transition-all group ${attendanceDone ? "bg-slate-100 cursor-not-allowed opacity-60" : "bg-orange-50 hover:bg-orange-600"}`}>
-            <Trees className={`${attendanceDone ? "text-slate-400" : "text-orange-600 group-hover:text-white"} mb-2`} size={24} />
-            <span className={`text-[9px] font-black uppercase ${attendanceDone ? "text-slate-400" : "group-hover:text-white"}`}>Holiday</span>
-          </button>
-          <button onClick={handleExport} className="flex flex-col items-center justify-center p-6 bg-slate-50 border rounded-[30px] hover:bg-slate-900 group transition-all">
-            <FileDown className="text-slate-600 group-hover:text-white mb-2" size={24} />
-            <span className="text-[9px] font-black uppercase group-hover:text-white">Export</span>
-          </button>
-          <button onClick={handleClearBatch} className="flex flex-col items-center justify-center p-6 bg-red-50 border rounded-[30px] hover:bg-red-600 group transition-all">
-            <Trash2 className="text-red-600 group-hover:text-white mb-2" size={24} />
-            <span className="text-[9px] font-black uppercase group-hover:text-white">Clear</span>
-          </button>
-        </div>
-
-        {/* Course Tabs */}
-        <div className="flex gap-2 mb-8 overflow-x-auto no-scrollbar pb-2">
-          {courses.map(c => (
-            <button key={c} onClick={() => setSelectedCourse(c)} className={`px-6 py-2 rounded-full text-[9px] font-black uppercase border transition-all shrink-0 ${selectedCourse === c ? "bg-blue-600 text-white shadow-lg" : "bg-white text-slate-400"}`}>{c}</button>
-          ))}
-        </div>
-
-        {/* Students Table */}
-        <div className="bg-white rounded-[40px] border shadow-2xl overflow-hidden min-h-[400px] relative p-8">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Strength: {students.length}</p>
-            {students.length > 0 ? (
-              <table className="w-full mt-6 text-left border-collapse">
-                <thead>
-                  <tr className="border-b">
-                    <th className="p-4 text-[9px] font-black uppercase text-slate-400">SR</th>
-                    <th className="p-4 text-[9px] font-black uppercase text-slate-400">Name</th>
-                    <th className="p-4 text-[9px] font-black uppercase text-slate-400 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {students.map((s: any) => (
-                    <tr key={s._id} className="border-b hover:bg-slate-50 transition-colors">
-                      <td className="p-4 font-bold text-blue-600 text-[11px]">#{s.srNo}</td>
-                      <td className="p-4 font-black text-slate-700 text-[11px] uppercase tracking-tighter">{s.name}</td>
-                      <td className="p-4 text-right"><span className="text-[8px] font-black uppercase bg-slate-100 px-3 py-1 rounded-full text-slate-400 italic">Registered</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-slate-300">
-                <Trash2 size={48} className="mb-4 opacity-20" />
-                <p className="text-[10px] font-black uppercase tracking-widest">No Students Found</p>
-              </div>
-            )}
-            {loading && <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex justify-center items-center z-50"><Loader2 className="animate-spin text-blue-600" size={40} /></div>}
-        </div>
+    <div className="min-h-screen bg-white text-slate-900 overflow-hidden relative font-sans">
+      
+      {/* PROFESSIONAL SOFT BACKGROUND */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute top-[-10%] left-[-5%] w-[600px] h-[600px] bg-blue-50 rounded-full blur-[100px] opacity-60"></div>
+        <div className="absolute bottom-[5%] right-[-5%] w-[500px] h-[500px] bg-indigo-50 rounded-full blur-[100px] opacity-60"></div>
       </div>
 
-      {/* Swipe Overlay */}
-      <AnimatePresence>
-        {isSwipeMode && students[currentIndex] && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6">
-            <button onClick={() => setIsSwipeMode(false)} className="absolute top-8 right-8 text-white/50 hover:text-white"><X size={32} /></button>
-            <div className="text-center mb-10">
-               <motion.h2 key={students[currentIndex]._id + "-name"} initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-white text-4xl font-black italic uppercase tracking-tighter">{students[currentIndex].name}</motion.h2>
-               <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.4em] mt-2">ROLL NO: {students[currentIndex].srNo}</p>
-            </div>
-            <div className="relative w-80 h-[450px]">
-              <motion.div
-                key={students[currentIndex]._id}
-                drag="y"
-                dragConstraints={{ top: 0, bottom: 0 }}
-                onDragEnd={(e, info) => {
-                  if (info.offset.y < -150) handleSwipe("Present");
-                  else if (info.offset.y > 150) handleSwipe("Absent");
-                }}
-                style={{ y, rotateX, opacity }}
-                className="w-full h-full bg-white rounded-[60px] shadow-2xl flex flex-col items-center justify-center p-10 text-center border-[6px] border-white relative overflow-hidden"
-              >
-                <div className="w-24 h-24 bg-gradient-to-br from-blue-50 to-slate-100 rounded-full flex items-center justify-center mb-10 text-blue-600 font-black text-4xl">{students[currentIndex].name.charAt(0)}</div>
-                <div className="flex flex-col gap-4 w-full">
-                  <button onClick={() => handleSwipe("Present")} className="w-full py-4 bg-emerald-500 text-white rounded-3xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2"><ArrowUp size={20}/> Swipe Up</button>
-                  <button onClick={() => handleSwipe("Absent")} className="w-full py-4 bg-red-500 text-white rounded-3xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2"><ArrowDown size={20}/> Swipe Down</button>
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div className="relative z-10 max-w-7xl mx-auto px-6 flex flex-col items-center">
+        
+        {/* TOP ACCREDITATION BADGE */}
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-12 inline-flex items-center gap-2 px-5 py-2 rounded-full bg-slate-50 border border-slate-200 shadow-sm"
+        >
+          <Award size={16} className="text-blue-600" />
+          <span className="text-[11px] font-bold uppercase tracking-widest text-slate-600">
+            NAAC Reaccredited <span className="text-blue-600 font-black">"A++"</span> Grade (CGPA 3.58)
+          </span>
+        </motion.div>
 
-      {/* ✅ ACTIVE MODAL FOR ADDING STUDENTS */}
-      {showModal && <AddStudentModal isOpen={showModal} onClose={() => setShowModal(false)} fetchStudents={fetchStudents} course={selectedCourse} />}
+        {/* HERO SECTION */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-center mt-12 mb-16"
+        >
+          <h1 className="text-5xl md:text-8xl font-black tracking-tight leading-none text-slate-900 mb-6">
+            Computer Science <br />
+            <span className="text-blue-600">Department</span>
+          </h1>
+          
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <div className="h-[2px] w-8 bg-blue-600 rounded-full"></div>
+            <h2 className="text-2xl md:text-3xl font-medium tracking-[0.3em] text-slate-400 uppercase">
+              E-Repository
+            </h2>
+            <div className="h-[2px] w-8 bg-blue-600 rounded-full"></div>
+          </div>
+
+          <p className="text-sm md:text-base text-slate-500 max-w-2xl mx-auto font-semibold leading-relaxed uppercase tracking-wider">
+            Shri Shivaji Education Society, Amravati <br/>
+            <span className="text-slate-900 font-bold">Shri Shivaji College of Arts, Commerce & Science, Akola</span>
+          </p>
+        </motion.div>
+
+        {/* ACCESS PORTALS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl px-4">
+          
+          {/* STUDENT HUB CARD - NOW LINKED TO NEW PORTAL */}
+          <Link href="/student-portal/login" className="group">
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="bg-white border border-slate-200 p-8 rounded-[40px] shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-300 h-full flex flex-col items-center text-center"
+            >
+              <div className="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors duration-300">
+                <GraduationCap size={36} className="text-blue-600 group-hover:text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">Student Hub</h3>
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-widest mb-8">Access assignments & resources</p>
+              <div className="w-full bg-slate-900 text-white py-4 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm tracking-wide group-hover:bg-blue-600 transition-colors">
+                Student Login <ChevronRight size={18} />
+              </div>
+              {/* Optional: Chota sa register link */}
+              <p className="mt-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">
+                New Student? <span className="underline">Register Now</span>
+              </p>
+            </motion.div>
+          </Link>
+
+          {/* ADMIN PORTAL CARD - UNCHANGED */}
+          <Link href="/admin-login" className="group">
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="bg-slate-50 border border-slate-200 p-8 rounded-[40px] shadow-sm hover:shadow-xl hover:border-slate-400 transition-all duration-300 h-full flex flex-col items-center text-center"
+            >
+              <div className="w-20 h-20 bg-white border border-slate-200 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-slate-900 transition-colors duration-300">
+                <ShieldCheck size={36} className="text-slate-600 group-hover:text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">Admin Portal</h3>
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-widest mb-8">Management & Analytics Control</p>
+              <div className="w-full bg-white text-slate-900 border border-slate-300 py-4 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm tracking-wide group-hover:border-slate-900 transition-colors">
+                Staff Login <ChevronRight size={18} />
+              </div>
+            </motion.div>
+          </Link>
+        </div>
+
+        {/* Leadership Section - UNCHANGED */}
+        <div className="mt-32 w-full max-w-5xl text-center">
+          <h2 className="text-xs font-black uppercase tracking-[0.4em] text-blue-600 mb-10">Department Leadership</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { name: "Mrs. R. S. Kale", role: "HOD" },
+              { name: "Dr. A. B. Dube", role: "Professor" },
+              { name: "Dr. S. M. Chavan", role: "Professor" },
+              { name: "Ms. M. R. Gudade", role: "Professor" }
+            ].map((fac, i) => (
+              <div key={i} className="py-8 px-4 rounded-3xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-md transition-all">
+                <p className="text-[12px] font-black text-slate-800 uppercase mb-1">{fac.name}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{fac.role}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer - UNCHANGED */}
+        <footer className="mt-32 mb-16 w-full pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center font-bold text-white text-xl shadow-lg">M</div>
+            <div className="text-left">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Developed By</p>
+              <p className="text-sm font-black text-slate-800">Mohammad Maaz</p>
+            </div>
+          </div>
+          <div className="text-slate-400 font-bold text-[11px] uppercase tracking-widest">
+            © 2026 Shri Shivaji College Computer Science
+          </div>
+        </footer>
+      </div>
     </div>
-  );
+  )
 }
+
