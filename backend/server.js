@@ -9,7 +9,11 @@ const authRoutes = require("./routes/authRoutes");
 const studentRoutes = require("./routes/studentRoutes"); 
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const assignmentRoutes = require("./routes/assignments"); 
-const repoRoutes = require("./routes/repoRoutes"); // <-- [ZAROORI] Ise add kiya
+const repoRoutes = require("./routes/repoRoutes");
+
+// --- [NEW PORTAL 2.0 ROUTES] ---
+const studentAuthRoutes = require("./routes/authRoutes"); // Yeh naya StudentAuth logic handle karega
+const contentRoutes = require("./routes/contentRoutes");   // Yeh Drive/Folders handle karega
 
 const app = express();
 
@@ -34,13 +38,14 @@ app.use(cors({
 }));
 
 // 2. Middleware
-app.use(express.json());
+app.use(express.json({ limit: '50mb' })); // Photo upload ke liye limit badha di hai
 
 // STATIC FOLDERS SETUP
 const uploadDirs = [
   path.join(__dirname, 'uploads'),
   path.join(__dirname, 'uploads', 'assignments'),
-  path.join(__dirname, 'uploads', 'repository') // <-- [ZAROORI] Ise add kiya
+  path.join(__dirname, 'uploads', 'repository'),
+  path.join(__dirname, 'uploads', 'portal') // <-- [NEW] Student Portal photos ke liye
 ];
 
 uploadDirs.forEach(dir => {
@@ -62,11 +67,17 @@ app.get("/", (req, res) => {
     res.status(200).send("College Management System API is active.");
 });
 
+// --- PURANA LOGIC (CHHEDA NAHI GAYA) ---
 app.use("/api/auth", authRoutes); 
 app.use("/api/students", studentRoutes); 
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/assignments", assignmentRoutes); 
-app.use("/api", repoRoutes); // <-- [ZAROORI] Digital Notes ke liye ise add kiya
+app.use("/api", repoRoutes);
+
+// --- [NEW] STUDENT PORTAL 2.0 LOGIC ---
+// Conflict se bachne ke liye naya prefix use kiya hai
+app.use("/api/portal-auth", studentAuthRoutes); 
+app.use("/api/content", contentRoutes);
 
 // 5. Global Error Handler
 app.use((err, req, res, next) => {
