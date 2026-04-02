@@ -1,19 +1,19 @@
 "use client"
-import { useState, ChangeEvent } from "react"
-import { X, Upload, Loader2, UserPlus } from "lucide-react"
+import { useState } from "react"
+import { X, Loader2, UserPlus } from "lucide-react"
 
-// FIX: Named Export use kar rahe hain taaki page.tsx mein import error na aaye
 export const AddStudentModal = ({ isOpen, onClose, fetchStudents, course }: any) => {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     srNo: "",
+    dob: "",
+    mobile: "",
     course: course || "B.Sc-I"
   })
 
   const API_BASE = "https://college-management-system-ae1l.onrender.com"
 
-  // --- SINGLE STUDENT ADD LOGIC ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -26,6 +26,7 @@ export const AddStudentModal = ({ isOpen, onClose, fetchStudents, course }: any)
       const data = await res.json()
       if (data.success) {
         alert("Student Added Successfully!")
+        setFormData({ name: "", srNo: "", dob: "", mobile: "", course: course || "B.Sc-I" })
         fetchStudents()
         onClose()
       } else {
@@ -38,45 +39,16 @@ export const AddStudentModal = ({ isOpen, onClose, fetchStudents, course }: any)
     }
   }
 
-  // --- EXCEL UPLOAD LOGIC WITH FALLBACK COURSE ---
-  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    const data = new FormData()
-    data.append("file", file)
-    data.append("fallbackCourse", course) // Current course passing logic added
-
-    setLoading(true)
-    try {
-      const res = await fetch(`${API_BASE}/api/students/import-excel`, { 
-        method: "POST", 
-        body: data 
-      })
-      const result = await res.json()
-      if (result.success) {
-        fetchStudents()
-        alert(result.message)
-        onClose()
-      } else {
-        alert(result.message)
-      }
-    } catch (err) { 
-      alert("Excel upload failed. Please check file format.") 
-    } finally {
-      setLoading(false)
-    }
-  }
-
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 text-slate-900">
       <div className="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden border border-slate-100">
+        {/* Header */}
         <div className="p-8 border-b flex justify-between items-center bg-slate-50/50">
           <div>
             <h2 className="text-xl font-black uppercase italic tracking-tighter">Add Student</h2>
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Enrolling for {course}</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Manual Enrollment: {course}</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white rounded-full transition-colors">
             <X size={20} className="text-slate-400" />
@@ -84,26 +56,8 @@ export const AddStudentModal = ({ isOpen, onClose, fetchStudents, course }: any)
         </div>
 
         <div className="p-8">
-          {/* Excel Import Section */}
-          <div className="mb-8 p-6 bg-blue-50/50 border-2 border-dashed border-blue-100 rounded-[30px] flex flex-col items-center gap-3">
-            <Upload className="text-blue-600" size={24} />
-            <div className="text-center">
-              <p className="text-[10px] font-black uppercase text-blue-600">Bulk Import via Excel</p>
-              <p className="text-[8px] font-bold text-slate-400 mt-1">Files: .xlsx or .xls only</p>
-            </div>
-            <label className="mt-2 bg-blue-600 text-white px-6 py-2 rounded-xl text-[9px] font-black uppercase cursor-pointer hover:bg-blue-700 transition-all">
-              {loading ? "Processing..." : "Select File"}
-              <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} disabled={loading} />
-            </label>
-          </div>
-
-          <div className="relative flex items-center justify-center mb-8">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-            <span className="relative bg-white px-4 text-[9px] font-black text-slate-300 uppercase italic">Or Manual Entry</span>
-          </div>
-
-          {/* Manual Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Full Name */}
             <div>
               <label className="text-[9px] font-black uppercase text-slate-400 ml-2">Full Name</label>
               <input 
@@ -114,19 +68,48 @@ export const AddStudentModal = ({ isOpen, onClose, fetchStudents, course }: any)
                 onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* SR Number */}
+              <div>
+                <label className="text-[9px] font-black uppercase text-slate-400 ml-2">SR Number</label>
+                <input 
+                  type="text" required
+                  className="w-full mt-1 px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="e.g. 101"
+                  value={formData.srNo}
+                  onChange={(e) => setFormData({...formData, srNo: e.target.value})}
+                />
+              </div>
+
+              {/* Mobile Number */}
+              <div>
+                <label className="text-[9px] font-black uppercase text-slate-400 ml-2">Mobile Number</label>
+                <input 
+                  type="tel" required
+                  className="w-full mt-1 px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="10 Digits"
+                  value={formData.mobile}
+                  onChange={(e) => setFormData({...formData, mobile: e.target.value})}
+                />
+              </div>
+            </div>
+
+            {/* Date of Birth */}
             <div>
-              <label className="text-[9px] font-black uppercase text-slate-400 ml-2">SR Number</label>
+              <label className="text-[9px] font-black uppercase text-slate-400 ml-2">Date of Birth</label>
               <input 
-                type="text" required
+                type="date" required
                 className="w-full mt-1 px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                placeholder="e.g. 101"
-                value={formData.srNo}
-                onChange={(e) => setFormData({...formData, srNo: e.target.value})}
+                value={formData.dob}
+                onChange={(e) => setFormData({...formData, dob: e.target.value})}
               />
             </div>
+
+            {/* Submit Button */}
             <button 
               type="submit" disabled={loading}
-              className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2"
+              className="w-full mt-4 bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2"
             >
               {loading ? <Loader2 className="animate-spin" size={16} /> : <><UserPlus size={16} /> Save Student</>}
             </button>
