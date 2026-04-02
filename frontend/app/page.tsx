@@ -64,21 +64,24 @@ export default function Home() {
           </p>
         </motion.div>
 
-        {/* ACCESS PORTALS */}
+        {/* ACCESS PORTALS - NOW IN UNIFIED DARK FORMAT */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-5xl px-4 mb-24">
+          
+          {/* STUDENT HUB - MODIFIED TO MATCH ADMIN STYLE */}
           <Link href="/student-login" className="group">
-            <motion.div whileHover={{ y: -10 }} className="bg-white border-2 border-slate-50 p-10 rounded-[50px] shadow-2xl shadow-slate-200/50 hover:border-blue-500 transition-all duration-500 relative overflow-hidden">
-              <div className="w-20 h-20 bg-blue-600 rounded-[30px] flex items-center justify-center mb-8 shadow-2xl shadow-blue-200">
+            <motion.div whileHover={{ y: -10 }} className="bg-slate-900 p-10 rounded-[50px] shadow-2xl shadow-slate-900/20 border-2 border-slate-900 hover:border-blue-500 transition-all duration-500">
+              <div className="w-20 h-20 bg-blue-600 rounded-[30px] flex items-center justify-center mb-8 shadow-2xl shadow-blue-500/20">
                 <GraduationCap size={40} className="text-white" />
               </div>
-              <h3 className="text-2xl font-black text-slate-900 mb-2 uppercase">Student Hub</h3>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-10">Digital Resource Access</p>
-              <div className="w-full bg-slate-900 text-white py-5 rounded-[25px] flex items-center justify-center gap-3 font-black text-xs uppercase tracking-widest group-hover:bg-blue-600 transition-all">
+              <h3 className="text-2xl font-black text-white mb-2 uppercase">Student Hub</h3>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-10">Digital Resource Access</p>
+              <div className="w-full bg-white text-slate-900 py-5 rounded-[25px] flex items-center justify-center gap-3 font-black text-xs uppercase tracking-widest group-hover:bg-blue-600 group-hover:text-white transition-all">
                 Login <ChevronRight size={18} />
               </div>
             </motion.div>
           </Link>
 
+          {/* ADMIN PORTAL */}
           <Link href="/admin-login" className="group">
             <motion.div whileHover={{ y: -10 }} className="bg-slate-900 p-10 rounded-[50px] shadow-2xl shadow-slate-900/20 border-2 border-slate-900 hover:border-blue-500 transition-all duration-500">
               <div className="w-20 h-20 bg-white rounded-[30px] flex items-center justify-center mb-8 shadow-2xl shadow-blue-500/20">
