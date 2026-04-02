@@ -6,7 +6,7 @@ import {
   CheckCircle2, Calendar, Trees, 
   X, ArrowUp, ArrowDown, Trash2 
 } from "lucide-react"
-import { AddStudentModal } from "../../../components/AddStudentModal";
+import { AddStudentModal } from "..components/AddStudentModal";
 
 export default function AdminManagement() {
   const [students, setStudents] = useState<any[]>([])
