@@ -324,7 +324,7 @@ export default function AdminManagement() {
         )}
       </AnimatePresence>
 
-      {showModal && <AddStudentModal isOpen={showModal} onClose={() => setShowModal(false)} fetchStudents={fetchStudents} course={selectedCourse} />}
+      //{showModal && <AddStudentModal isOpen={showModal} onClose={() => setShowModal(false)} fetchStudents={fetchStudents} course={selectedCourse} />}
     </div>
   );
 }
