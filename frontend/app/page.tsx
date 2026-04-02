@@ -6,7 +6,9 @@ import {
   CheckCircle2, Calendar, Trees, 
   X, ArrowUp, ArrowDown, Trash2 
 } from "lucide-react"
-import { AddStudentModal } from "..components/AddStudentModal";
+
+// ✅ FIX: Corrected import path for GitHub/Vercel
+import { AddStudentModal } from "@/components/AddStudentModal";
 
 export default function AdminManagement() {
   const [students, setStudents] = useState<any[]>([])
@@ -22,19 +24,16 @@ export default function AdminManagement() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const courses = ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II"]
   
-  // Base URL for API
   const API_BASE = "https://college-management-system-ae1l.onrender.com";
 
   const y = useMotionValue(0);
   const rotateX = useTransform(y, [-200, 200], [25, -25]);
   const opacity = useTransform(y, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
 
-  // 1. Check if attendance or holiday is already marked for today
   const checkAttendanceStatus = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/attendance/today/${selectedDate}/${selectedCourse}`);
       const data = await res.json();
-      // Naye model ke hisaab se check karein agar record exists karta hai
       setAttendanceDone(data.success && data.record);
     } catch (err) { console.error("Status Check Error:", err); }
   };
@@ -79,7 +78,6 @@ export default function AdminManagement() {
     }
   };
 
-  // 2. FIXED HOLIDAY MODE (Naya Route Call Karega)
   const handleHolidayMode = async () => {
     if (attendanceDone) return alert("Attendance or Holiday already marked for today!");
     if (!confirm(`Mark ${selectedDate} as Holiday for ${selectedCourse}?`)) return;
@@ -95,14 +93,9 @@ export default function AdminManagement() {
       if (data.success) { 
         alert("✅ Holiday Marked Successfully!"); 
         fetchStudents(); 
-      } else {
-        alert("❌ Error: " + data.message);
-      }
-    } catch (err) { 
-      alert("Error marking holiday. Server check karein."); 
-    } finally { 
-      setLoading(false); 
-    }
+      } else { alert("❌ Error: " + data.message); }
+    } catch (err) { alert("Error marking holiday."); } 
+    finally { setLoading(false); }
   };
 
   const handleClearBatch = async () => {
@@ -123,7 +116,6 @@ export default function AdminManagement() {
     finally { setLoading(false); }
   };
 
-  // 3. FIXED EXCEL EXPORT (Naya dynamic file download)
   const handleExport = () => {
     window.open(`${API_BASE}/api/attendance/export?course=${selectedCourse}`, "_blank");
   };
@@ -165,9 +157,7 @@ export default function AdminManagement() {
       if (data.success) {
         alert(`✅ Attendance Done!`);
         fetchStudents();
-      } else {
-        alert("❌ Failed: " + data.message);
-      }
+      } else { alert("❌ Failed: " + data.message); }
     } catch (err) { alert("Error submitting attendance"); }
     finally { setLoading(false); }
   };
@@ -209,21 +199,11 @@ export default function AdminManagement() {
             <FileUp className="text-emerald-600 group-hover:text-white mb-2" size={24} />
             <span className="text-[9px] font-black uppercase group-hover:text-white">Import Excel</span>
           </button>
-          <button 
-            onClick={startAttendance} 
-            disabled={attendanceDone}
-            className={`flex flex-col items-center justify-center p-6 border rounded-[30px] transition-all group ${attendanceDone ? "bg-slate-100 cursor-not-allowed opacity-60" : "bg-emerald-50 hover:bg-emerald-600"}`}
-          >
+          <button onClick={startAttendance} disabled={attendanceDone} className={`flex flex-col items-center justify-center p-6 border rounded-[30px] transition-all group ${attendanceDone ? "bg-slate-100 cursor-not-allowed opacity-60" : "bg-emerald-50 hover:bg-emerald-600"}`}>
             <CheckCircle2 className={`${attendanceDone ? "text-slate-400" : "text-emerald-600 group-hover:text-white"} mb-2`} size={24} />
-            <span className={`text-[9px] font-black uppercase ${attendanceDone ? "text-slate-400" : "group-hover:text-white"}`}>
-              {attendanceDone ? "Done ✅" : "Attendance"}
-            </span>
+            <span className={`text-[9px] font-black uppercase ${attendanceDone ? "text-slate-400" : "group-hover:text-white"}`}>{attendanceDone ? "Done ✅" : "Attendance"}</span>
           </button>
-          <button 
-            onClick={handleHolidayMode} 
-            disabled={attendanceDone}
-            className={`flex flex-col items-center justify-center p-6 border rounded-[30px] transition-all group ${attendanceDone ? "bg-slate-100 cursor-not-allowed opacity-60" : "bg-orange-50 hover:bg-orange-600"}`}
-          >
+          <button onClick={handleHolidayMode} disabled={attendanceDone} className={`flex flex-col items-center justify-center p-6 border rounded-[30px] transition-all group ${attendanceDone ? "bg-slate-100 cursor-not-allowed opacity-60" : "bg-orange-50 hover:bg-orange-600"}`}>
             <Trees className={`${attendanceDone ? "text-slate-400" : "text-orange-600 group-hover:text-white"} mb-2`} size={24} />
             <span className={`text-[9px] font-black uppercase ${attendanceDone ? "text-slate-400" : "group-hover:text-white"}`}>Holiday</span>
           </button>
@@ -240,9 +220,7 @@ export default function AdminManagement() {
         {/* Course Tabs */}
         <div className="flex gap-2 mb-8 overflow-x-auto no-scrollbar pb-2">
           {courses.map(c => (
-            <button key={c} onClick={() => setSelectedCourse(c)} className={`px-6 py-2 rounded-full text-[9px] font-black uppercase border transition-all shrink-0 ${selectedCourse === c ? "bg-blue-600 text-white shadow-lg" : "bg-white text-slate-400"}`}>
-              {c}
-            </button>
+            <button key={c} onClick={() => setSelectedCourse(c)} className={`px-6 py-2 rounded-full text-[9px] font-black uppercase border transition-all shrink-0 ${selectedCourse === c ? "bg-blue-600 text-white shadow-lg" : "bg-white text-slate-400"}`}>{c}</button>
           ))}
         </div>
 
@@ -263,9 +241,7 @@ export default function AdminManagement() {
                     <tr key={s._id} className="border-b hover:bg-slate-50 transition-colors">
                       <td className="p-4 font-bold text-blue-600 text-[11px]">#{s.srNo}</td>
                       <td className="p-4 font-black text-slate-700 text-[11px] uppercase tracking-tighter">{s.name}</td>
-                      <td className="p-4 text-right">
-                        <span className="text-[8px] font-black uppercase bg-slate-100 px-3 py-1 rounded-full text-slate-400 italic">Registered</span>
-                      </td>
+                      <td className="p-4 text-right"><span className="text-[8px] font-black uppercase bg-slate-100 px-3 py-1 rounded-full text-slate-400 italic">Registered</span></td>
                     </tr>
                   ))}
                 </tbody>
@@ -280,7 +256,7 @@ export default function AdminManagement() {
         </div>
       </div>
 
-      {/* Attendance Swipe UI */}
+      {/* Swipe Overlay */}
       <AnimatePresence>
         {isSwipeMode && students[currentIndex] && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6">
@@ -289,13 +265,11 @@ export default function AdminManagement() {
                <motion.h2 key={students[currentIndex]._id + "-name"} initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-white text-4xl font-black italic uppercase tracking-tighter">{students[currentIndex].name}</motion.h2>
                <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.4em] mt-2">ROLL NO: {students[currentIndex].srNo}</p>
             </div>
-
             <div className="relative w-80 h-[450px]">
               <motion.div
                 key={students[currentIndex]._id}
                 drag="y"
                 dragConstraints={{ top: 0, bottom: 0 }}
-                dragElastic={0.8}
                 onDragEnd={(e, info) => {
                   if (info.offset.y < -150) handleSwipe("Present");
                   else if (info.offset.y > 150) handleSwipe("Absent");
@@ -303,28 +277,19 @@ export default function AdminManagement() {
                 style={{ y, rotateX, opacity }}
                 className="w-full h-full bg-white rounded-[60px] shadow-2xl flex flex-col items-center justify-center p-10 text-center border-[6px] border-white relative overflow-hidden"
               >
-                <div className="w-24 h-24 bg-gradient-to-br from-blue-50 to-slate-100 rounded-full flex items-center justify-center mb-10">
-                  <span className="text-blue-600 font-black text-4xl">{students[currentIndex].name.charAt(0)}</span>
-                </div>
+                <div className="w-24 h-24 bg-gradient-to-br from-blue-50 to-slate-100 rounded-full flex items-center justify-center mb-10 text-blue-600 font-black text-4xl">{students[currentIndex].name.charAt(0)}</div>
                 <div className="flex flex-col gap-4 w-full">
-                  <button onClick={() => handleSwipe("Present")} className="w-full py-4 bg-emerald-500 text-white rounded-3xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2"><ArrowUp size={20}/> Swipe Up (Present)</button>
-                  <button onClick={() => handleSwipe("Absent")} className="w-full py-4 bg-red-500 text-white rounded-3xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2"><ArrowDown size={20}/> Swipe Down (Absent)</button>
+                  <button onClick={() => handleSwipe("Present")} className="w-full py-4 bg-emerald-500 text-white rounded-3xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2"><ArrowUp size={20}/> Swipe Up</button>
+                  <button onClick={() => handleSwipe("Absent")} className="w-full py-4 bg-red-500 text-white rounded-3xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2"><ArrowDown size={20}/> Swipe Down</button>
                 </div>
-                <p className="mt-8 text-slate-300 font-black text-[9px] uppercase">Hold & Drag Card</p>
               </motion.div>
-            </div>
-
-            <div className="mt-12 flex flex-col items-center gap-3">
-              <p className="text-white/30 font-black text-[12px] uppercase tracking-[0.4em]">Progress: {currentIndex + 1} / {students.length}</p>
-              <div className="w-48 h-1 bg-white/5 rounded-full overflow-hidden">
-                <motion.div className="h-full bg-blue-500" initial={{ width: 0 }} animate={{ width: `${((currentIndex + 1) / students.length) * 100}%` }} />
-              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      //{showModal && <AddStudentModal isOpen={showModal} onClose={() => setShowModal(false)} fetchStudents={fetchStudents} course={selectedCourse} />}
+      {/* ✅ ACTIVE MODAL FOR ADDING STUDENTS */}
+      {showModal && <AddStudentModal isOpen={showModal} onClose={() => setShowModal(false)} fetchStudents={fetchStudents} course={selectedCourse} />}
     </div>
   );
 }
