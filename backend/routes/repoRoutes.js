@@ -1,11 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const path = require("path");
 const Folder = require("../models/Folder");
 const File = require("../models/File");
 
-// Multer Storage Setup
 const storage = multer.diskStorage({
   destination: "uploads/repository/",
   filename: (req, file, cb) => {
@@ -14,21 +12,29 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// 1. Create Folder
+// 1. Create Folder (Added Course)
 router.post("/create-folder", async (req, res) => {
   try {
-    const { name, parentId } = req.body;
-    const newFolder = new Folder({ name, parentId: parentId === "root" ? null : parentId });
+    const { name, parentId, course } = req.body;
+    const newFolder = new Folder({ 
+      name, 
+      parentId: parentId === "root" ? null : parentId,
+      course: course || "General"
+    });
     await newFolder.save();
     res.json({ success: true, folder: newFolder });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 2. Get Data (Folders & Files)
+// 2. Get Folders with Course Filter
 router.get("/folders/:parentId", async (req, res) => {
   try {
     const parentId = req.params.parentId === "root" ? null : req.params.parentId;
-    const folders = await Folder.find({ parentId });
+    const { course } = req.query;
+    let query = { parentId };
+    if (course) query.course = course; // Filter by student course
+    
+    const folders = await Folder.find(query);
     res.json({ success: true, folders });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
