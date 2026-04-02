@@ -12,29 +12,24 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// 1. Create Folder (Added Course)
+// 1. Create Folder (Course logic deleted)
 router.post("/create-folder", async (req, res) => {
   try {
-    const { name, parentId, course } = req.body;
+    const { name, parentId } = req.body;
     const newFolder = new Folder({ 
       name, 
-      parentId: parentId === "root" ? null : parentId,
-      course: course || "General"
+      parentId: parentId === "root" ? null : parentId 
     });
     await newFolder.save();
     res.json({ success: true, folder: newFolder });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 2. Get Folders with Course Filter
+// 2. Get Folders (Direct fetch)
 router.get("/folders/:parentId", async (req, res) => {
   try {
     const parentId = req.params.parentId === "root" ? null : req.params.parentId;
-    const { course } = req.query;
-    let query = { parentId };
-    if (course) query.course = course; // Filter by student course
-    
-    const folders = await Folder.find(query);
+    const folders = await Folder.find({ parentId });
     res.json({ success: true, folders });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
