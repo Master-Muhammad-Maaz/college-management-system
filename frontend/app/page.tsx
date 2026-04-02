@@ -56,30 +56,28 @@ export default function Home() {
         {/* ACCESS PORTALS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl px-4">
           
-          {/* STUDENT HUB CARD - UPDATED LINK */}
+          {/* STUDENT HUB CARD - NOW LINKED TO NEW PORTAL */}
           <Link href="/student-portal/login" className="group">
             <motion.div 
               whileHover={{ y: -5 }}
               className="bg-white border border-slate-200 p-8 rounded-[40px] shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-300 h-full flex flex-col items-center text-center"
             >
               <div className="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors duration-300">
-                < GraduationCap size={36} className="text-blue-600 group-hover:text-white" />
+                <GraduationCap size={36} className="text-blue-600 group-hover:text-white" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">Student Hub</h3>
               <p className="text-xs text-slate-500 font-medium uppercase tracking-widest mb-8">Access assignments & resources</p>
-              
               <div className="w-full bg-slate-900 text-white py-4 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm tracking-wide group-hover:bg-blue-600 transition-colors">
                 Student Login <ChevronRight size={18} />
               </div>
-              
-              {/* REGISTER LINK ADDED FOR NEW STUDENTS */}
+              {/* Optional: Chota sa register link */}
               <p className="mt-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">
-                New Student? <span className="underline">Register Here</span>
+                New Student? <span className="underline">Register Now</span>
               </p>
             </motion.div>
           </Link>
 
-          {/* ADMIN PORTAL CARD */}
+          {/* ADMIN PORTAL CARD - UNCHANGED */}
           <Link href="/admin-login" className="group">
             <motion.div 
               whileHover={{ y: -5 }}
@@ -97,7 +95,7 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* Leadership Section */}
+        {/* Leadership Section - UNCHANGED */}
         <div className="mt-32 w-full max-w-5xl text-center">
           <h2 className="text-xs font-black uppercase tracking-[0.4em] text-blue-600 mb-10">Department Leadership</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -115,7 +113,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Footer - UNCHANGED */}
         <footer className="mt-32 mb-16 w-full pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center font-bold text-white text-xl shadow-lg">M</div>
