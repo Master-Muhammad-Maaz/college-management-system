@@ -17,11 +17,10 @@ export default function Home() {
       <div className="relative z-50 bg-slate-900 py-2.5 overflow-hidden border-b border-slate-800">
         <div className="flex whitespace-nowrap animate-marquee">
           <span className="text-[10px] md:text-xs font-bold text-blue-400 uppercase tracking-[0.2em] px-4">
-            This project, titled “CORE-MATRIX REPO”, has been successfully completed by Mohammed Maaz Mohammed Niyaz as part of the M.Sc. II (Computer Science) curriculum for the academic year 2025–26. This project was carried out under the guidance of Mr. A. S. Jadhao and the supervision of Ms. R. S. Kale, Head, Department of Computer Science. ——— 
+            This project, titled “CORE-MATRIX REPO”, has been successfully completed by Mohammed Maaz Mohammed Niyaz as part of the M.Sc. II (Computer Science) curriculum for the academic year 2025–26.
           </span>
           <span className="text-[10px] md:text-xs font-bold text-blue-400 uppercase tracking-[0.2em] px-4">
-            This project, titled “CORE-MATRIX REPO”, has been successfully completed by Mohammed Maaz Mohammed Niyaz as part of the M.Sc. II (Computer Science) curriculum for the academic year 2025–26. This project was carried out under the guidance of Mr. A. S. Jadhao and the supervision of Ms. R. S. Kale, Head, Department of Computer Science.
-          </span>
+            This project, titled “CORE-MATRIX REPO”, has been successfully completed by Mohammed Maaz Mohammed Niyaz as part of the M.Sc. II (Computer Science) curriculum for the academic year 2025–26. 
         </div>
       </div>
 
