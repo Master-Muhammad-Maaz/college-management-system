@@ -1,105 +1,122 @@
 const express = require("express");
 const router = express.Router();
-const StudentAuth = require("../models/StudentAuth");
+const Admin = require("../models/Admin");
+const Student = require("../models/Student");
 
-// ==========================================
-// 1. STUDENT REGISTRATION (Portal 2.0)
-// ==========================================
+// 1. REGISTER ROUTE (Student & Admin)
 router.post("/register", async (req, res) => {
-  try {
-    const { name, email, password, rollNo, course, profilePic } = req.body;
+    try {
+        const { name, contact, dob, role, course, password, email, rollNo, profilePic } = req.body;
 
-    // Sabhi fields ko check kar rahe hain (Required Fields Missing error fix)
-    if (!name || !email || !password || !rollNo || !course) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Opps! Sabhi details bharna zaroori hain." 
-      });
+        // --- NEW STUDENT REGISTRATION LOGIC (Portal 2.0) ---
+        if (role === "student") {
+            // Naye portal ke liye validation
+            if (!name || !email || !password || !rollNo || !course) {
+                return res.status(400).json({ success: false, message: "Required fields missing for student" });
+            }
+
+            const cleanEmail = email.toLowerCase().trim();
+
+            // Check if student exists by Email or RollNo
+            const existing = await Student.findOne({ 
+                $or: [{ email: cleanEmail }, { rollNo: rollNo }] 
+            });
+
+            if (existing) {
+                return res.json({ success: false, message: "Student already exists with this Email or Roll No" });
+            }
+
+            const newStudent = new Student({
+                name: name.trim(),
+                email: cleanEmail,
+                password: password,
+                rollNo: rollNo,
+                course: course,
+                profilePic: profilePic || "",
+                // Purane compatibility ke liye (agar model mein required hain)
+                contact: contact || rollNo, 
+                dob: dob || "2000-01-01" 
+            });
+
+            await newStudent.save();
+            return res.json({ success: true, message: "Student Registered Successfully" });
+
+        } else {
+            // --- OLD ADMIN REGISTRATION (UNCHANGED) ---
+            if (!name || !contact || !dob) {
+                return res.status(400).json({ success: false, message: "Required fields missing for admin" });
+            }
+
+            const cleanContact = contact.trim();
+            const cleanDob = dob.trim();
+
+            const existingAdmin = await Admin.findOne({ contact: cleanContact });
+            if (existingAdmin) {
+                return res.json({ success: false, message: "Admin already exists with this number" });
+            }
+
+            const newAdmin = new Admin({
+                name: name.trim(),
+                contact: cleanContact,
+                dob: cleanDob
+            });
+
+            await newAdmin.save();
+            res.json({ success: true, message: "Admin Registered Successfully" });
+        }
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Registration Error: " + err.message });
     }
-
-    // Email duplicate check
-    const existingStudent = await StudentAuth.findOne({ email: email.toLowerCase() });
-    if (existingStudent) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Ye Email pehle se registered hai!" 
-      });
-    }
-
-    // Naya Student create karna
-    const newStudent = new StudentAuth({
-      name,
-      email: email.toLowerCase(),
-      password, // Note: Aap baad mein ise bcrypt se secure kar sakte hain
-      rollNo,
-      course,
-      profilePic: profilePic || ""
-    });
-
-    await newStudent.save();
-
-    res.status(201).json({ 
-      success: true, 
-      message: "Mubarak ho! Registration Successful." 
-    });
-
-  } catch (err) {
-    console.error("Registration Error:", err);
-    res.status(500).json({ 
-      success: false, 
-      message: "Server Error: Registration fail ho gaya.",
-      error: err.message 
-    });
-  }
 });
 
-// ==========================================
-// 2. STUDENT LOGIN (Portal 2.0)
-// ==========================================
+// 2. LOGIN ROUTE (Student & Admin)
 router.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
+    try {
+        const { contact, dob, role, email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Email aur Password dono chahiye." 
-      });
+        // --- NEW STUDENT LOGIN LOGIC (Email & Password) ---
+        if (role === "student") {
+            if (!email || !password) {
+                return res.status(400).json({ success: false, message: "Email and Password are required" });
+            }
+
+            const user = await Student.findOne({
+                email: email.toLowerCase().trim(),
+                password: password
+            });
+
+            if (!user) {
+                return res.json({ success: false, message: "Invalid Email or Password" });
+            }
+
+            res.json({ success: true, message: "Login Successful", user });
+
+        } else {
+            // --- OLD ADMIN LOGIN LOGIC (UNCHANGED) ---
+            if (!contact || !dob) {
+                return res.status(400).json({ success: false, message: "Mobile and DOB are required" });
+            }
+
+            const cleanContact = contact.trim();
+            const cleanDob = dob.trim();
+
+            const user = await Admin.findOne({
+                contact: cleanContact,
+                dob: cleanDob
+            });
+
+            if (!user) {
+                return res.json({ 
+                    success: false, 
+                    message: "Invalid Admin Credentials. Check Number and DOB (YYYY-MM-DD)." 
+                });
+            }
+
+            res.json({ success: true, message: "Admin Login Successful", user });
+        }
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Server error during login" });
     }
-
-    // Student ko dhoondna
-    const student = await StudentAuth.findOne({ 
-      email: email.toLowerCase(), 
-      password: password 
-    });
-
-    if (!student) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "Galat Email ya Password!" 
-      });
-    }
-
-    // Login hone par zaroori data bhejna
-    res.json({
-      success: true,
-      message: "Login Successful!",
-      student: {
-        id: student._id,
-        name: student.name,
-        email: student.email,
-        course: student.course,
-        profilePic: student.profilePic
-      }
-    });
-
-  } catch (err) {
-    console.error("Login Error:", err);
-    res.status(500).json({ 
-      success: false, 
-      message: "Server par koi masla hai." 
-    });
-  }
 });
 
 module.exports = router;
