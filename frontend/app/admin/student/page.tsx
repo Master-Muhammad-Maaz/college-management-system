@@ -1,8 +1,3 @@
-Maaz Bhai, aapke folder structure aur Vercel build errors ke mutabiq, yeh aapki **`frontend/app/admin/student/page.tsx`** file ka updated final version hai. Isme maine import path ko fix kar diya hai taaki `Module not found` wala error khatam ho jaye.
-
-### **Final Version: `frontend/app/admin/student/page.tsx`**
-
-```tsx
 "use client"
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion"
@@ -272,6 +267,3 @@ export default function AdminManagement() {
     </div>
   );
 }
-```
-
-Is code ko save karke commit karein, Vercel build ab successfully complete ho jayegi.
