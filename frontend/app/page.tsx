@@ -1,5 +1,5 @@
 "use client"
-import { motion } from "motion/react"
+import { motion } from "framer-motion"
 import Link from "next/link"
 import { ShieldCheck, GraduationCap, ChevronRight, Award, Binary, Cpu, Globe, UserCheck } from "lucide-react"
 
@@ -96,7 +96,7 @@ export default function Home() {
         {/* FULL DEPARTMENT LEADERSHIP SECTION */}
         <div className="mt-20 w-full max-w-6xl text-center">
           <h2 className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-400 mb-12">Department Faculty & Leadership</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {[
               { name: "Ms. R. S. Kale", role: "Head of Dept", color: "text-blue-600" },
               { name: "Mr. A. S. Jadhao", role: "Project Guide", color: "text-indigo-600" },
@@ -104,11 +104,11 @@ export default function Home() {
               { name: "Dr. S. M. Chavan", role: "Professor", color: "text-slate-500" },
               { name: "Ms. M. R. Gudade", role: "Professor", color: "text-slate-500" }
             ].map((fac, i) => (
-              <div key={i} className={`p-8 rounded-[35px] border border-slate-100 bg-slate-50/50 flex flex-col items-center hover:bg-white hover:shadow-xl transition-all duration-300 ${i === 4 ? 'md:col-span-4 md:w-1/4 md:mx-auto' : ''}`}>
+              <div key={i} className="p-8 rounded-[35px] border border-slate-100 bg-slate-50/50 flex flex-col items-center hover:bg-white hover:shadow-xl transition-all duration-300">
                 <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-slate-100">
                   <UserCheck size={20} className={fac.color} />
                 </div>
-                <p className="text-[12px] font-black text-slate-900 uppercase">{fac.name}</p>
+                <p className="text-[12px] font-black text-slate-900 uppercase leading-tight">{fac.name}</p>
                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">{fac.role}</p>
               </div>
             ))}
@@ -118,7 +118,7 @@ export default function Home() {
         {/* FOOTER */}
         <footer className="mt-40 mb-20 w-full pt-16 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-6">
-            <div className="w-16 h-16 rounded-[24px] bg-slate-900 flex items-center justify-center font-black text-white text-2xl shadow-2xl">M</div>
+            <div className="w-16 h-16 rounded-[24px] bg-slate-900 flex items-center justify-center font-black text-white text-2xl shadow-2xl ring-8 ring-slate-50">M</div>
             <div className="text-left">
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600">Developed By</p>
               <p className="text-lg font-black text-slate-900 tracking-tighter">Mohammad Maaz</p>
