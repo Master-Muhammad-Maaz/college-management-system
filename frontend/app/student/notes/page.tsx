@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Folder, File as FileIcon, Home, ArrowLeft } from "lucide-react"
+import { Folder, File as FileIcon, Home, ChevronRight, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export default function StudentNotesView() {
@@ -11,10 +11,18 @@ export default function StudentNotesView() {
   const [files, setFiles] = useState([])
   const [currentFolder, setCurrentFolder] = useState("root")
   const [path, setPath] = useState([{ id: "root", name: "Library" }])
+  const [student, setStudent] = useState<any>(null)
+
+  useEffect(() => {
+    const data = localStorage.getItem("studentData")
+    if (data) setStudent(JSON.parse(data))
+  }, [])
 
   const fetchData = async () => {
+    if (!student) return
     try {
-      const resF = await fetch(`${API_BASE_URL}/api/folders/${currentFolder}`)
+      // Pass student course to backend
+      const resF = await fetch(`${API_BASE_URL}/api/folders/${currentFolder}?course=${student.course}`)
       const dataF = await resF.json()
       if (dataF.success) setFolders(dataF.folders)
 
@@ -24,7 +32,7 @@ export default function StudentNotesView() {
     } catch (err) { console.error(err) }
   }
 
-  useEffect(() => { fetchData() }, [currentFolder])
+  useEffect(() => { fetchData() }, [currentFolder, student])
 
   return (
     <div className="min-h-screen bg-white p-6 md:p-12">
@@ -34,8 +42,11 @@ export default function StudentNotesView() {
         </button>
 
         <div className="flex items-center gap-4 mb-10">
-          <div className="p-4 bg-indigo-600 text-white rounded-[25px] shadow-lg"><Folder size={28} /></div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Academic Library</h1>
+          <div className="p-4 bg-indigo-600 text-white rounded-[25px] shadow-lg shadow-indigo-100"><Folder size={28} /></div>
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Notes: {student?.course}</h1>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Academic Repository</p>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 bg-slate-50 p-5 rounded-2xl border border-slate-100 mb-12">
