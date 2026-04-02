@@ -38,25 +38,31 @@ export default function Home() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 flex flex-col items-center ml-6 md:ml-8">
         
-        {/* 2. COLLEGE DETAIL BOX */}
+        {/* 2. COLLEGE DETAIL BOX (RE-ORDERED) */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="mt-6 md:mt-8 mb-8 md:mb-10 p-4 md:p-6 rounded-[25px] md:rounded-[35px] bg-slate-50/80 border border-slate-200 backdrop-blur-sm w-full max-w-4xl shadow-sm text-center"
         >
-          <div className="flex items-center justify-center gap-2 text-blue-600 mb-2 md:mb-3">
+          {/* Society & College Name FIRST */}
+          <div className="mb-4">
+            <p className="text-[9px] md:text-[12px] text-slate-500 font-bold uppercase tracking-[0.15em] md:tracking-[0.3em] leading-relaxed">
+              Shri Shivaji Education Society, Amravati
+            </p>
+            <h3 className="text-slate-900 font-black text-[10px] md:text-lg block mt-1 tracking-normal md:tracking-[0.1em] uppercase">
+              Shri Shivaji College of Arts, Commerce & Science, Akola
+            </h3>
+          </div>
+
+          <div className="h-[1px] w-full bg-slate-200 my-3 opacity-50"></div>
+
+          {/* NAAC Accreditation SECOND */}
+          <div className="flex items-center justify-center gap-2 text-blue-600">
             <Award size={14} className="md:w-[18px]" />
             <span className="text-[8px] md:text-xs font-black uppercase tracking-[0.1em] md:tracking-[0.2em]">
               NAAC Reaccredited <span className="bg-blue-600 text-white px-1.5 py-0.5 rounded-md">"A++"</span> Grade (CGPA 3.58)
             </span>
           </div>
-          <div className="h-[1px] w-full bg-slate-200 my-2 opacity-50"></div>
-          <p className="text-[9px] md:text-[12px] text-slate-500 font-bold uppercase tracking-[0.15em] md:tracking-[0.3em] leading-relaxed">
-            Shri Shivaji Education Society, Amravati<br/>
-            <span className="text-slate-900 font-black text-[10px] md:text-lg block mt-1 tracking-normal md:tracking-[0.1em]">
-              Shri Shivaji College of Arts, Commerce & Science, Akola
-            </span>
-          </p>
         </motion.div>
 
         {/* 3. HERO TITLES */}
