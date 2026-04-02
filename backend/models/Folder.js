@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const folderSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  course: { type: String, required: true }, // Batch filter ke liye added
+  course: { type: String, default: "General" }, // Student course matching ke liye
   parentId: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'Folder', 
