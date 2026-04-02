@@ -20,7 +20,8 @@ export default function Home() {
             This project, titled “CORE-MATRIX REPO”, has been successfully completed by Mohammed Maaz Mohammed Niyaz as part of the M.Sc. II (Computer Science) curriculum for the academic year 2025–26.
           </span>
           <span className="text-[10px] md:text-xs font-bold text-blue-400 uppercase tracking-[0.2em] px-4">
-            This project, titled “CORE-MATRIX REPO”, has been successfully completed by Mohammed Maaz Mohammed Niyaz as part of the M.Sc. II (Computer Science) curriculum for the academic year 2025–26. 
+            This project, titled “CORE-MATRIX REPO”, has been successfully completed by Mohammed Maaz Mohammed Niyaz as part of the M.Sc. II (Computer Science) curriculum for the academic year 2025–26.
+          </span>
         </div>
       </div>
 
@@ -108,31 +109,37 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 6. RE-ALIGNED FOOTER */}
-        <footer className="w-full py-10 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 items-center gap-8">
+        {/* 6. UPDATED FOOTER WITH SUPERVISOR */}
+        <footer className="w-full py-10 border-t border-slate-100 grid grid-cols-1 md:grid-cols-4 items-center gap-4">
           
-          {/* LEFT: Developer Info */}
-          <div className="flex items-center gap-4 justify-start">
-            <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center font-black text-white text-xl shadow-lg ring-4 ring-slate-50">M</div>
+          {/* Developer */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center font-black text-white text-lg">M</div>
             <div className="text-left">
-              <p className="text-[8px] font-black uppercase tracking-widest text-blue-600 leading-none mb-1">Lead Developer</p>
-              <p className="text-base font-black text-slate-900 tracking-tighter">Mohammad Maaz</p>
+              <p className="text-[7px] font-black uppercase tracking-widest text-blue-600 mb-0.5">Developer</p>
+              <p className="text-xs font-black text-slate-900">Mohammad Maaz</p>
             </div>
           </div>
 
-          {/* MIDDLE: Copyright Info */}
-          <div className="text-center">
-            <p className="text-slate-400 font-black text-[9px] uppercase tracking-[0.2em]">© 2026 Dept. of Computer Science</p>
-            <p className="text-slate-900 font-black text-[9px] uppercase tracking-widest mt-0.5">CORE-MATRIX REPO v1.0</p>
+          {/* Copyright - Middle Shifted */}
+          <div className="text-center md:col-span-1">
+            <p className="text-slate-400 font-black text-[8px] uppercase tracking-[0.1em]">© 2026 Dept. of Comp. Science</p>
+            <p className="text-slate-900 font-black text-[8px] uppercase tracking-widest">v1.0 REPO</p>
           </div>
 
-          {/* RIGHT: Guide Name */}
-          <div className="flex items-center gap-4 justify-end">
+          {/* Supervisor - NEW */}
+          <div className="text-center border-x border-slate-100 px-2">
+            <p className="text-[7px] font-black uppercase tracking-widest text-purple-600 mb-0.5">Supervisor</p>
+            <p className="text-xs font-black text-slate-900">Mrs. R. P. Pundkar</p>
+          </div>
+
+          {/* Guide */}
+          <div className="flex items-center gap-3 justify-end">
             <div className="text-right">
-              <p className="text-[8px] font-black uppercase tracking-widest text-indigo-600 leading-none mb-1">Project Guide</p>
-              <p className="text-base font-black text-slate-900 tracking-tighter italic">Mr. A. S. Jadhao</p>
+              <p className="text-[7px] font-black uppercase tracking-widest text-indigo-600 mb-0.5">Project Guide</p>
+              <p className="text-xs font-black text-slate-900 italic">Mr. A. S. Jadhao</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center font-black text-blue-600 text-xl shadow-sm border border-blue-100">J</div>
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center font-black text-blue-600 text-lg border border-blue-100">J</div>
           </div>
 
         </footer>
