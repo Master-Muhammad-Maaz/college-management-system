@@ -94,7 +94,7 @@ export default function Home() {
           <h2 className="text-[9px] font-black uppercase tracking-[0.5em] text-slate-400 mb-8 italic">Academic Leadership & Guidance</h2>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {[
-              { name: "Ms. R. S. Kale", role: "Head of Dept", color: "text-blue-600" },
+              { name: "Mrs. R. P. Pundkar", role: "Head of Dept", color: "text-blue-600" },
               { name: "Mr. A. S. Jadhao", role: "Assistant Professor", color: "text-indigo-600" },
               { name: "Dr. A. B. Dube", role: "Assistant Professor", color: "text-slate-500" },
               { name: "Dr. S. M. Chavan", role: "Assistant Professor", color: "text-slate-500" },
@@ -120,26 +120,26 @@ export default function Home() {
               <p className="text-xs font-black text-slate-900">Mohammad Maaz</p>
             </div>
           </div>
-
-          {/* Copyright - Middle Shifted */}
-          <div className="text-center md:col-span-1">
-            <p className="text-slate-400 font-black text-[8px] uppercase tracking-[0.1em]">© 2026 Dept. of Comp. Science</p>
-            <p className="text-slate-900 font-black text-[8px] uppercase tracking-widest">v1.0 REPO</p>
-          </div>
-
+          
           {/* Supervisor - NEW */}
           <div className="text-center border-x border-slate-100 px-2">
             <p className="text-[7px] font-black uppercase tracking-widest text-purple-600 mb-0.5">Supervisor</p>
             <p className="text-xs font-black text-slate-900">Mrs. R. P. Pundkar</p>
           </div>
-
-          {/* Guide */}
+          
+         {/* Guide */}
           <div className="flex items-center gap-3 justify-end">
             <div className="text-right">
               <p className="text-[7px] font-black uppercase tracking-widest text-indigo-600 mb-0.5">Project Guide</p>
               <p className="text-xs font-black text-slate-900 italic">Mr. A. S. Jadhao</p>
             </div>
             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center font-black text-blue-600 text-lg border border-blue-100">J</div>
+          </div>
+          
+          {/* Copyright - Middle Shifted */}
+          <div className="text-center md:col-span-1">
+            <p className="text-slate-400 font-black text-[8px] uppercase tracking-[0.1em]">© 2026 Dept. of Comp. Science</p>
+            <p className="text-slate-900 font-black text-[8px] uppercase tracking-widest">v1.0 REPO</p>
           </div>
 
         </footer>
