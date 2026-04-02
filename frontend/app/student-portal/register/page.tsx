@@ -35,7 +35,6 @@ export default function StudentRegister() {
     e.preventDefault()
     setLoading(true)
     try {
-      // URL UPDATED TO PORTAL-AUTH
       const res = await fetch("https://college-management-system-ae1l.onrender.com/api/portal-auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -46,7 +45,7 @@ export default function StudentRegister() {
         alert("Registration Successful! Please Login.")
         router.push("/student-portal/login")
       } else {
-        alert(data.message)
+        alert(data.message || "Registration failed")
       }
     } catch (err) {
       alert("Server error. Try again.")
@@ -160,7 +159,7 @@ export default function StudentRegister() {
             {loading ? <Loader2 className="animate-spin" size={20} /> : <>Complete Registration <ArrowRight size={18} /></>}
           </button>
         </form>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   )
 }
