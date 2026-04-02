@@ -68,7 +68,7 @@ export default function Home() {
           </div>
         </motion.div>
 
-        {/* 4. ACCESS PORTALS */}
+        {/* 4. ACCESS PORTALS - UNIFIED DARK THEME */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl px-4 mb-16">
           {[
             { title: "Student Hub", icon: GraduationCap, link: "/student-login", sub: "Digital Resource Access" },
@@ -109,24 +109,13 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 6. UPDATED FOOTER WITH DUAL CREDITS */}
+        {/* 6. CLEAN FOOTER - UPDATED */}
         <footer className="w-full py-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-8">
-            {/* Developer Maaz */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center font-black text-white text-lg shadow-lg ring-4 ring-slate-50">M</div>
-              <div className="text-left">
-                <p className="text-[8px] font-black uppercase tracking-widest text-blue-600 leading-none mb-1">Lead Developer</p>
-                <p className="text-sm font-black text-slate-900 tracking-tighter">Mohammad Maaz</p>
-              </div>
-            </div>
-            {/* Guide Mr. Jadhao */}
-            <div className="flex items-center gap-3 border-l border-slate-200 pl-8">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center font-black text-blue-600 text-lg shadow-sm border border-blue-100">J</div>
-              <div className="text-left">
-                <p className="text-[8px] font-black uppercase tracking-widest text-indigo-600 leading-none mb-1">Project Guide</p>
-                <p className="text-sm font-black text-slate-900 tracking-tighter">Mr. A. S. Jadhao</p>
-              </div>
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center font-black text-white text-xl shadow-lg ring-4 ring-slate-50">M</div>
+            <div className="text-left">
+              <p className="text-[8px] font-black uppercase tracking-widest text-blue-600 leading-none mb-1">Lead Developer</p>
+              <p className="text-base font-black text-slate-900 tracking-tighter">Mohammad Maaz</p>
             </div>
           </div>
           <div className="text-right">
