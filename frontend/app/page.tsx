@@ -12,7 +12,7 @@ export default function Home() {
         <div className="flex flex-col whitespace-nowrap animate-vertical-marquee">
           {[1, 2, 3, 4].map((i) => (
             <span key={i} className="text-[8px] md:text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] [writing-mode:vertical-rl] rotate-180 py-20 opacity-80">
-              UPGRADE: V2.0 AURORA (EXPECTED 2029) ——— STABILITY: VERIFIED ——— 
+              NEXT UPGRADE EXPECTED BY 2029 ——— SYSTEM STABILITY VERIFIED ——— 
             </span>
           ))}
         </div>
@@ -120,7 +120,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 6. UPDATED FOOTER WITH VERSION NAME */}
+        {/* 6. UPDATED FOOTER */}
         <footer className="w-full py-8 md:py-10 border-t border-slate-100 grid grid-cols-1 md:grid-cols-4 items-center gap-6 md:gap-4">
           <div className="flex items-center gap-3 justify-center md:justify-start">
             <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center font-black text-white text-lg">M</div>
@@ -132,7 +132,7 @@ export default function Home() {
 
           <div className="text-center">
             <p className="text-slate-400 font-black text-[8px] uppercase tracking-[0.1em]">© 2026 Dept. of Comp. Science</p>
-            <p className="text-slate-900 font-black text-[8px] uppercase tracking-widest">v2.0 AURORA</p>
+            <p className="text-slate-900 font-black text-[8px] uppercase tracking-widest">v1.0 REPO</p>
           </div>
 
           <div className="text-center border-y md:border-y-0 md:border-x border-slate-100 py-4 md:py-0">
