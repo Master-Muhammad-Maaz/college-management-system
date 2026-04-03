@@ -2,78 +2,44 @@
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion"
 import { 
- Users, UserPlus, Loader2, FileDown, FileUp, 
- CheckCircle2, Calendar, Trees, 
- X, ArrowUp, ArrowDown, Trash2, FolderOpen, FileText
+  Users, UserPlus, Loader2, FileDown, FileUp, 
+  CheckCircle2, Calendar, Trees, 
+  X, ArrowUp, ArrowDown, Trash2 
 } from "lucide-react"
 import { AddStudentModal } from "../../../components/AddStudentModal";
 
 export default function AdminManagement() {
- const [students, setStudents] = useState<any[]>([])
- const [folders, setFolders] = useState<any[]>([])
- const [files, setFiles] = useState<any[]>([])
- const [selectedCourse, setSelectedCourse] = useState("B.Sc-I")
- const [showModal, setShowModal] = useState(false)
- const [loading, setLoading] = useState(false)
- const [attendanceDone, setAttendanceDone] = useState(false)
- const [isSwipeMode, setIsSwipeMode] = useState(false);
- const [currentIndex, setCurrentIndex] = useState(0);
- const [attendanceSession, setAttendanceSession] = useState<any[]>([]);
- const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [students, setStudents] = useState<any[]>([])
+  const [selectedCourse, setSelectedCourse] = useState("B.Sc-I")
+  const [showModal, setShowModal] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [attendanceDone, setAttendanceDone] = useState(false)
+  const [isSwipeMode, setIsSwipeMode] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [attendanceSession, setAttendanceSession] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   
- const fileInputRef = useRef<HTMLInputElement>(null);
- const courses = ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II"]
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const courses = ["B.Sc-I", "B.Sc-II", "B.Sc-III", "M.Sc-I", "M.Sc-II"]
   
- // Base URL for API
- const API_BASE = "https://college-management-system-ae1l.onrender.com";
+  // Base URL for API
+  const API_BASE = "https://college-management-system-ae1l.onrender.com";
 
- const y = useMotionValue(0);
- const rotateX = useTransform(y, [-200, 200], [25, -25]);
- const opacity = useTransform(y, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
+  const y = useMotionValue(0);
+  const rotateX = useTransform(y, [-200, 200], [25, -25]);
+  const opacity = useTransform(y, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
 
- // --- REPOSITORY DELETE LOGIC ---
- const fetchRepoData = async () => {
-   try {
-     const fRes = await fetch(`${API_BASE}/api/repo/folders/root`);
-     const fData = await fRes.json();
-     if (fData.success) setFolders(fData.folders);
-
-     const flRes = await fetch(`${API_BASE}/api/repo/files/root`);
-     const flData = await flRes.json();
-     if (flData.success) setFiles(flData.files);
-   } catch (err) { console.error("Repo Fetch Error"); }
- };
-
- const handleDeleteFolder = async (id: string) => {
-   if (!confirm("Delete this folder and all its contents?")) return;
-   setLoading(true);
-   try {
-     const res = await fetch(`${API_BASE}/api/repo/delete-folder/${id}`, { method: "DELETE" });
-     if ((await res.json()).success) { alert("Folder Deleted"); fetchRepoData(); }
-   } catch (err) { alert("Delete failed"); }
-   finally { setLoading(false); }
- };
-
- const handleDeleteFile = async (id: string) => {
-   if (!confirm("Delete this file permanently?")) return;
-   setLoading(true);
-   try {
-     const res = await fetch(`${API_BASE}/api/repo/delete-file/${id}`, { method: "DELETE" });
-     if ((await res.json()).success) { alert("File Deleted"); fetchRepoData(); }
-   } catch (err) { alert("Delete failed"); }
-   finally { setLoading(false); }
- };
-
- // 1. Check if attendance or holiday is already marked for today
- const checkAttendanceStatus = async () => {
+  // 1. Check if attendance or holiday is already marked for today
+  const checkAttendanceStatus = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/attendance/today/${selectedDate}/${selectedCourse}`);
       const data = await res.json();
+      // Naye model ke hisaab se check karein agar record exists karta hai
       setAttendanceDone(data.success && data.record);
     } catch (err) { console.error("Status Check Error:", err); }
   };
 
- const fetchStudents = async () => {
+  const fetchStudents = async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/students/list?course=${selectedCourse}`)
@@ -85,14 +51,13 @@ export default function AdminManagement() {
     finally { setLoading(false); }
   }
 
- useEffect(() => {
+  useEffect(() => {
     fetchStudents();
-    fetchRepoData();
   }, [selectedCourse, selectedDate]);
 
- const handleImportClick = () => { fileInputRef.current?.click(); };
+  const handleImportClick = () => { fileInputRef.current?.click(); };
 
- const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const formData = new FormData();
@@ -114,7 +79,8 @@ export default function AdminManagement() {
     }
   };
 
- const handleHolidayMode = async () => {
+  // 2. FIXED HOLIDAY MODE (Naya Route Call Karega)
+  const handleHolidayMode = async () => {
     if (attendanceDone) return alert("Attendance or Holiday already marked for today!");
     if (!confirm(`Mark ${selectedDate} as Holiday for ${selectedCourse}?`)) return;
     
@@ -139,7 +105,7 @@ export default function AdminManagement() {
     }
   };
 
- const handleClearBatch = async () => {
+  const handleClearBatch = async () => {
     const pin = prompt(`Enter PIN (1234) to CLEAR ${selectedCourse}:`);
     if (pin !== "1234") return;
     setLoading(true);
@@ -157,17 +123,18 @@ export default function AdminManagement() {
     finally { setLoading(false); }
   };
 
- const handleExport = () => {
+  // 3. FIXED EXCEL EXPORT (Naya dynamic file download)
+  const handleExport = () => {
     window.open(`${API_BASE}/api/attendance/export?course=${selectedCourse}`, "_blank");
   };
 
- const startAttendance = () => {
+  const startAttendance = () => {
     if (attendanceDone) return alert("Attendance already marked!");
     if (students.length === 0) return alert("No students found!");
     setCurrentIndex(0); setAttendanceSession([]); setIsSwipeMode(true);
   };
 
- const handleSwipe = (status: "Present" | "Absent") => {
+  const handleSwipe = (status: "Present" | "Absent") => {
     const currentStudent = students[currentIndex];
     const newEntry = { studentId: currentStudent._id, status: status.toUpperCase() }; 
     const updatedSession = [...attendanceSession, newEntry];
@@ -182,7 +149,7 @@ export default function AdminManagement() {
     }
   };
 
- const submitAttendance = async (finalData: any[]) => {
+  const submitAttendance = async (finalData: any[]) => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/attendance/swipe-session`, {
@@ -205,7 +172,7 @@ export default function AdminManagement() {
     finally { setLoading(false); }
   };
 
- return (
+  return (
     <div className="min-h-screen bg-white text-slate-900 p-6 md:p-10 font-sans relative overflow-hidden">
       <div className="max-w-7xl mx-auto">
         <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls" />
@@ -268,31 +235,6 @@ export default function AdminManagement() {
             <Trash2 className="text-red-600 group-hover:text-white mb-2" size={24} />
             <span className="text-[9px] font-black uppercase group-hover:text-white">Clear</span>
           </button>
-        </div>
-
-        {/* Repository Delete Menu */}
-        <div className="mb-10 p-6 bg-slate-50 rounded-[30px] border border-dashed">
-          <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Manage Repository</h2>
-          <div className="flex flex-wrap gap-3">
-            {folders.map(f => (
-              <div key={f._id} className="flex items-center gap-2 bg-white p-2 px-4 rounded-full border shadow-sm group">
-                <FolderOpen size={14} className="text-blue-500" />
-                <span className="text-[10px] font-bold text-slate-700">{f.name}</span>
-                <button onClick={() => handleDeleteFolder(f._id)} className="text-slate-300 hover:text-red-500 transition-colors">
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ))}
-            {files.map(file => (
-              <div key={file._id} className="flex items-center gap-2 bg-white p-2 px-4 rounded-full border shadow-sm group">
-                <FileText size={14} className="text-emerald-500" />
-                <span className="text-[10px] font-bold text-slate-700 truncate max-w-[100px]">{file.name}</span>
-                <button onClick={() => handleDeleteFile(file._id)} className="text-slate-300 hover:text-red-500 transition-colors">
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Course Tabs */}
@@ -384,5 +326,5 @@ export default function AdminManagement() {
 
       {showModal && <AddStudentModal isOpen={showModal} onClose={() => setShowModal(false)} fetchStudents={fetchStudents} course={selectedCourse} />}
     </div>
- );
+  );
 }
