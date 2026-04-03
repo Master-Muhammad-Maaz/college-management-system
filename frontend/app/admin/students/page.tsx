@@ -29,12 +29,61 @@ export default function AdminManagement() {
   const rotateX = useTransform(y, [-200, 200], [25, -25]);
   const opacity = useTransform(y, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
 
-  // 1. Check if attendance or holiday is already marked for today
+  // --- NEW DELETE LOGIC FOR REPOSITORY/STUDENTS ---
+  
+  // 1. Delete Single Student/File Logic
+  const handleDeleteStudent = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/students/delete/${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("✅ Student Record Deleted!");
+        fetchStudents();
+      } else {
+        alert("❌ Delete Failed: " + data.message);
+      }
+    } catch (err) {
+      alert("Error connecting to server");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 2. Delete Folder/Batch Logic (Connected to your backend /delete-folder/:id logic if needed)
+  const handleDeleteFolder = async () => {
+    const confirmName = prompt(`Type "DELETE ${selectedCourse}" to confirm full folder/batch deletion:`);
+    if (confirmName !== `DELETE ${selectedCourse}`) return alert("Confirmation failed. Nothing deleted.");
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/repo/delete-folder/${selectedCourse}`, { // Adjust endpoint as per your Repo Route
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`✅ ${selectedCourse} Folder & Files Purged!`);
+        fetchStudents();
+      } else {
+        alert("❌ Error: " + data.message);
+      }
+    } catch (err) {
+      alert("Server error during folder deletion");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- EXISTING LOGIC ---
+
   const checkAttendanceStatus = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/attendance/today/${selectedDate}/${selectedCourse}`);
       const data = await res.json();
-      // Naye model ke hisaab se check karein agar record exists karta hai
       setAttendanceDone(data.success && data.record);
     } catch (err) { console.error("Status Check Error:", err); }
   };
@@ -79,7 +128,6 @@ export default function AdminManagement() {
     }
   };
 
-  // 2. FIXED HOLIDAY MODE (Naya Route Call Karega)
   const handleHolidayMode = async () => {
     if (attendanceDone) return alert("Attendance or Holiday already marked for today!");
     if (!confirm(`Mark ${selectedDate} as Holiday for ${selectedCourse}?`)) return;
@@ -123,7 +171,6 @@ export default function AdminManagement() {
     finally { setLoading(false); }
   };
 
-  // 3. FIXED EXCEL EXPORT (Naya dynamic file download)
   const handleExport = () => {
     window.open(`${API_BASE}/api/attendance/export?course=${selectedCourse}`, "_blank");
   };
@@ -231,9 +278,9 @@ export default function AdminManagement() {
             <FileDown className="text-slate-600 group-hover:text-white mb-2" size={24} />
             <span className="text-[9px] font-black uppercase group-hover:text-white">Export</span>
           </button>
-          <button onClick={handleClearBatch} className="flex flex-col items-center justify-center p-6 bg-red-50 border rounded-[30px] hover:bg-red-600 group transition-all">
+          <button onClick={handleDeleteFolder} className="flex flex-col items-center justify-center p-6 bg-red-50 border rounded-[30px] hover:bg-red-600 group transition-all">
             <Trash2 className="text-red-600 group-hover:text-white mb-2" size={24} />
-            <span className="text-[9px] font-black uppercase group-hover:text-white">Clear</span>
+            <span className="text-[9px] font-black uppercase group-hover:text-white">Delete Folder</span>
           </button>
         </div>
 
@@ -250,26 +297,36 @@ export default function AdminManagement() {
         <div className="bg-white rounded-[40px] border shadow-2xl overflow-hidden min-h-[400px] relative p-8">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Strength: {students.length}</p>
             {students.length > 0 ? (
-              <table className="w-full mt-6 text-left border-collapse">
-                <thead>
-                  <tr className="border-b">
-                    <th className="p-4 text-[9px] font-black uppercase text-slate-400">SR</th>
-                    <th className="p-4 text-[9px] font-black uppercase text-slate-400">Name</th>
-                    <th className="p-4 text-[9px] font-black uppercase text-slate-400 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {students.map((s: any) => (
-                    <tr key={s._id} className="border-b hover:bg-slate-50 transition-colors">
-                      <td className="p-4 font-bold text-blue-600 text-[11px]">#{s.srNo}</td>
-                      <td className="p-4 font-black text-slate-700 text-[11px] uppercase tracking-tighter">{s.name}</td>
-                      <td className="p-4 text-right">
-                        <span className="text-[8px] font-black uppercase bg-slate-100 px-3 py-1 rounded-full text-slate-400 italic">Registered</span>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full mt-6 text-left border-collapse">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="p-4 text-[9px] font-black uppercase text-slate-400">SR</th>
+                      <th className="p-4 text-[9px] font-black uppercase text-slate-400">Name</th>
+                      <th className="p-4 text-[9px] font-black uppercase text-slate-400 text-right">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {students.map((s: any) => (
+                      <tr key={s._id} className="border-b hover:bg-slate-50 transition-colors group">
+                        <td className="p-4 font-bold text-blue-600 text-[11px]">#{s.srNo}</td>
+                        <td className="p-4 font-black text-slate-700 text-[11px] uppercase tracking-tighter">{s.name}</td>
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-3">
+                            <span className="text-[8px] font-black uppercase bg-slate-100 px-3 py-1 rounded-full text-slate-400 italic">Registered</span>
+                            <button 
+                              onClick={() => handleDeleteStudent(s._id, s.name)}
+                              className="opacity-0 group-hover:opacity-100 p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-20 text-slate-300">
                 <Trash2 size={48} className="mb-4 opacity-20" />
