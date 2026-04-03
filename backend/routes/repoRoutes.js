@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
+const fs = require("fs"); // File system module zaroori hai storage delete ke liye
+const path = require("path");
 const Folder = require("../models/Folder");
 const File = require("../models/File");
 
@@ -12,7 +14,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// 1. Create Folder (Course logic deleted)
+// --- CREATE & GET LOGIC (Sahi hai aapka) ---
 router.post("/create-folder", async (req, res) => {
   try {
     const { name, parentId } = req.body;
@@ -25,7 +27,6 @@ router.post("/create-folder", async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 2. Get Folders (Direct fetch)
 router.get("/folders/:parentId", async (req, res) => {
   try {
     const parentId = req.params.parentId === "root" ? null : req.params.parentId;
@@ -42,7 +43,6 @@ router.get("/files/:folderId", async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 3. Upload File
 router.post("/upload", upload.single("file"), async (req, res) => {
   try {
     const newFile = new File({
@@ -55,15 +55,48 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 4. Delete Logic
+// --- UPDATED DELETE LOGIC (Fixed) ---
+
+// 1. Delete Folder (And its contents)
 router.delete("/delete-folder/:id", async (req, res) => {
-  await Folder.findByIdAndDelete(req.params.id);
-  res.json({ success: true });
+  try {
+    const folderId = req.params.id;
+
+    // Pehle us folder ki saari files dhoondo aur storage se delete karo
+    const filesInFolder = await File.find({ folderId });
+    filesInFolder.forEach(file => {
+      const filePath = path.join(__dirname, "..", file.path);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath); // File server se delete
+    });
+
+    // DB se files aur folder delete karo
+    await File.deleteMany({ folderId });
+    await Folder.findByIdAndDelete(folderId);
+
+    res.json({ success: true, message: "Folder and contents deleted" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
+// 2. Delete Single File (With Storage Cleanup)
 router.delete("/delete-file/:id", async (req, res) => {
-  await File.findByIdAndDelete(req.params.id);
-  res.json({ success: true });
+  try {
+    const file = await File.findById(req.params.id);
+    if (!file) return res.status(404).json({ success: false, message: "File not found" });
+
+    // Server storage se file remove karein
+    const filePath = path.join(__dirname, "..", file.path);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    // Database se record delete karein
+    await File.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: "File deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 module.exports = router;
